@@ -10,6 +10,10 @@ import TestimonialsPage from './pages/TestimonialsPage'
 import BrandDetailsPage from './pages/BrandDetailsPage'
 import ServiceOptionDetailsPage from './pages/ServiceOptionDetailsPage'
 import NotFoundPage from './pages/NotFoundPage'
+import LoginPage from './pages/LoginPage'
+import SignUpPage from './pages/SignUpPage'
+import PaymentPage from './pages/PaymentPage'
+import AdminDashboard from './pages/AdminDashboard'
 
 function App() {
   // Check local storage for preferences, or default to light/ar
@@ -46,6 +50,10 @@ function App() {
           <Route path="/service-options/:id" element={<ServiceOptionDetailsPage lang={lang} />} />
           <Route path="/about" element={<AboutPage lang={lang} />} />
           <Route path="/testimonials" element={<TestimonialsPage lang={lang} />} />
+          <Route path="/login" element={<LoginPage lang={lang} />} />
+          <Route path="/signup" element={<SignUpPage lang={lang} />} />
+          <Route path="/payment" element={<PaymentPage lang={lang} />} />
+          <Route path="/admin" element={<AdminDashboard lang={lang} />} />
           <Route path="*" element={<NotFoundPage lang={lang} />} />
         </Route>
       </Routes>

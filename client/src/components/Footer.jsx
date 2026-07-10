@@ -100,7 +100,7 @@ export default function Footer({ lang }) {
               <li className="flex items-center gap-3">
                 <Mail className="text-primary shrink-0" size={20} />
                 <span className="text-slate-500 dark:text-slate-400">
-                  info@almajdair.com
+                  almajdair@gmail.com
                 </span>
               </li>
             </ul>
