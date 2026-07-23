@@ -1,9 +1,22 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
+import ServiceSelectionModal from './ServiceSelectionModal';
 
 export default function Brands({ lang }) {
   const isAr = lang === 'ar';
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedBrand, setSelectedBrand] = useState('');
+  const [selectedCapacity, setSelectedCapacity] = useState('');
+
+  const capacities = ['1.5', '2.25', '3', '4', '5'];
+
+  const handleSelectCapacity = (e, brandName, capacity) => {
+    e.preventDefault(); // Prevent navigating to brand details page
+    setSelectedBrand(brandName);
+    setSelectedCapacity(capacity);
+    setIsModalOpen(true);
+  };
 
   const brands = [
     { 
@@ -122,9 +135,29 @@ export default function Brands({ lang }) {
                   </p>
                   
                   {/* Learn More Arrow (Decorative) */}
-                  <div className="mt-6 flex items-center gap-2 text-primary dark:text-accent font-semibold opacity-0 group-hover:opacity-100 transform translate-y-4 group-hover:translate-y-0 transition-all duration-500">
-                    <span>{isAr ? 'اكتشف المزيد' : 'Discover More'}</span>
-                    <span className={isAr ? 'rotate-180' : ''}>&rarr;</span>
+                  <div className="mt-6 flex items-center justify-between text-primary dark:text-accent font-semibold opacity-0 group-hover:opacity-100 transform translate-y-4 group-hover:translate-y-0 transition-all duration-500">
+                    <span className="flex items-center gap-2">
+                      <span>{isAr ? 'اكتشف المزيد' : 'Discover More'}</span>
+                      <span className={isAr ? 'rotate-180' : ''}>&rarr;</span>
+                    </span>
+                  </div>
+                  
+                  {/* Capacities Hover Menu */}
+                  <div className="absolute left-0 right-0 bottom-0 bg-white/95 dark:bg-midnight/95 backdrop-blur-md p-6 translate-y-full group-hover:translate-y-0 transition-transform duration-500 rounded-b-[2rem] border-t border-slate-100 dark:border-slate-800 flex flex-col gap-3 shadow-[0_-10px_40px_rgba(0,0,0,0.1)]">
+                    <p className="text-center font-bold text-slate-900 dark:text-white mb-2">
+                      {isAr ? 'اختر قدرة التكييف (حصان):' : 'Select AC Capacity (HP):'}
+                    </p>
+                    <div className="flex flex-wrap justify-center gap-2">
+                      {capacities.map(cap => (
+                        <button
+                          key={cap}
+                          onClick={(e) => handleSelectCapacity(e, brand.name, cap)}
+                          className="px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-primary hover:text-white dark:hover:bg-primary text-slate-700 dark:text-slate-300 font-bold text-sm transition-colors shadow-sm"
+                        >
+                          {cap}
+                        </button>
+                      ))}
+                    </div>
                   </div>
                 </div>
 
@@ -135,6 +168,14 @@ export default function Brands({ lang }) {
           ))}
         </motion.div>
       </div>
+
+      <ServiceSelectionModal 
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        selectedBrand={selectedBrand}
+        selectedCapacity={selectedCapacity}
+        lang={lang}
+      />
     </section>
   );
 }

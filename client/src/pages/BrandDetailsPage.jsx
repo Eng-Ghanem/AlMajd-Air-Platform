@@ -1,11 +1,22 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { ArrowRight, ArrowLeft, CheckCircle } from 'lucide-react';
 import { motion } from 'framer-motion';
+import ServiceSelectionModal from '../components/ServiceSelectionModal';
 
 export default function BrandDetailsPage({ lang }) {
   const { id } = useParams();
   const isAr = lang === 'ar';
+  
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedCapacity, setSelectedCapacity] = useState('');
+  
+  const capacities = ['1.5', '2.25', '3', '4', '5'];
+
+  const handleSelectCapacity = (capacity) => {
+    setSelectedCapacity(capacity);
+    setIsModalOpen(true);
+  };
 
   // Hardcoded detailed data for demonstration
   const brandsData = {
@@ -136,18 +147,33 @@ export default function BrandDetailsPage({ lang }) {
               </ul>
 
               <div className="mt-12 pt-12 border-t border-slate-200 dark:border-slate-800">
-                <a 
-                  href="#contact" 
-                  className="inline-block px-10 py-4 rounded-full bg-gradient-to-r from-primary to-accent text-white font-bold text-xl hover:scale-105 transition-all duration-300 shadow-xl"
-                >
-                  {isAr ? `احجز تكييف ${brand.name} الآن` : `Book ${brand.name} Now`}
-                </a>
+                <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-6">
+                  {isAr ? `احجز تكييف ${brand.name} الآن - اختر القدرة (حصان)` : `Book ${brand.name} Now - Select Capacity (HP)`}
+                </h3>
+                <div className="flex flex-wrap gap-4">
+                  {capacities.map(cap => (
+                    <button 
+                      key={cap}
+                      onClick={() => handleSelectCapacity(cap)}
+                      className="px-8 py-3 rounded-xl bg-gradient-to-r from-primary to-accent text-white font-bold text-lg hover:scale-105 transition-all duration-300 shadow-lg shadow-primary/30"
+                    >
+                      {cap} {isAr ? 'حصان' : 'HP'}
+                    </button>
+                  ))}
+                </div>
               </div>
             </motion.div>
           </div>
-
         </div>
       </div>
+
+      <ServiceSelectionModal 
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        selectedBrand={brand.name}
+        selectedCapacity={selectedCapacity}
+        lang={lang}
+      />
     </main>
   );
 }

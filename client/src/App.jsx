@@ -12,8 +12,53 @@ import ServiceOptionDetailsPage from './pages/ServiceOptionDetailsPage'
 import NotFoundPage from './pages/NotFoundPage'
 import LoginPage from './pages/LoginPage'
 import SignUpPage from './pages/SignUpPage'
+import ForgotPasswordPage from './pages/ForgotPasswordPage'
 import PaymentPage from './pages/PaymentPage'
+import ProfilePage from './pages/ProfilePage'
 import AdminDashboard from './pages/AdminDashboard'
+import { AuthProvider, useAuth } from './context/AuthContext'
+
+function AppRoutes({ lang, setLang, theme, setTheme }) {
+  const { profile, user: authUser } = useAuth();
+  
+  let user = profile;
+  if (!user) {
+    const localUser = JSON.parse(localStorage.getItem('user') || 'null');
+    if (localUser) {
+      user = localUser;
+    } else if (authUser) {
+      user = { 
+        name: authUser.user_metadata?.name || authUser.email?.split('@')[0] || 'User',
+        role: authUser.email === '41147332a@gmail.com' ? 'admin' : 'customer'
+      };
+    }
+  }
+  
+  const isAdmin = user?.role === 'admin';
+
+  return (
+    <Routes>
+      <Route element={<MainLayout lang={lang} setLang={setLang} theme={theme} setTheme={setTheme} />}>
+        <Route path="/" element={<Home lang={lang} />} />
+        <Route path="/brands" element={<BrandsPage lang={lang} />} />
+        <Route path="/brands/:id" element={<BrandDetailsPage lang={lang} />} />
+        <Route path="/services" element={<ServicesPage lang={lang} />} />
+        <Route path="/service-options/:id" element={<ServiceOptionDetailsPage lang={lang} />} />
+        <Route path="/about" element={<AboutPage lang={lang} />} />
+        <Route path="/testimonials" element={<TestimonialsPage lang={lang} />} />
+        <Route path="/login" element={<LoginPage lang={lang} />} />
+        <Route path="/signup" element={<SignUpPage lang={lang} />} />
+        <Route path="/forgot-password" element={<ForgotPasswordPage lang={lang} />} />
+        <Route path="/payment" element={<PaymentPage lang={lang} />} />
+        <Route path="/profile" element={user ? <ProfilePage lang={lang} /> : <LoginPage lang={lang} />} />
+        <Route path="/admin" element={isAdmin ? <AdminDashboard lang={lang} /> : <Home lang={lang} />} />
+        <Route path="*" element={<NotFoundPage lang={lang} />} />
+      </Route>
+    </Routes>
+  );
+}
+
+import WhatsAppButton from './components/WhatsAppButton'
 
 function App() {
   // Check local storage for preferences, or default to light/ar
@@ -39,25 +84,13 @@ function App() {
   }, [lang])
 
   return (
-    <BrowserRouter>
-      <ScrollToTop />
-      <Routes>
-        <Route element={<MainLayout lang={lang} setLang={setLang} theme={theme} setTheme={setTheme} />}>
-          <Route path="/" element={<Home lang={lang} />} />
-          <Route path="/brands" element={<BrandsPage lang={lang} />} />
-          <Route path="/brands/:id" element={<BrandDetailsPage lang={lang} />} />
-          <Route path="/services" element={<ServicesPage lang={lang} />} />
-          <Route path="/service-options/:id" element={<ServiceOptionDetailsPage lang={lang} />} />
-          <Route path="/about" element={<AboutPage lang={lang} />} />
-          <Route path="/testimonials" element={<TestimonialsPage lang={lang} />} />
-          <Route path="/login" element={<LoginPage lang={lang} />} />
-          <Route path="/signup" element={<SignUpPage lang={lang} />} />
-          <Route path="/payment" element={<PaymentPage lang={lang} />} />
-          <Route path="/admin" element={<AdminDashboard lang={lang} />} />
-          <Route path="*" element={<NotFoundPage lang={lang} />} />
-        </Route>
-      </Routes>
-    </BrowserRouter>
+    <AuthProvider>
+      <BrowserRouter>
+        <ScrollToTop />
+        <WhatsAppButton />
+        <AppRoutes lang={lang} setLang={setLang} theme={theme} setTheme={setTheme} />
+      </BrowserRouter>
+    </AuthProvider>
   )
 }
 

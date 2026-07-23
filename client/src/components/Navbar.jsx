@@ -1,9 +1,31 @@
-import React, { useState } from 'react';
-import { NavLink, Link } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { NavLink, Link, useNavigate } from 'react-router-dom';
 import { Moon, Sun, Globe, Menu, X, User, LogIn } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
 
 export default function Navbar({ lang, setLang, theme, setTheme }) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const navigate = useNavigate();
+  const { profile, user: authUser, logout } = useAuth();
+  
+  // Failsafe: Try to get user from profile, then localStorage, then Supabase auth session
+  let user = profile;
+  if (!user) {
+    const localUser = JSON.parse(localStorage.getItem('user') || 'null');
+    if (localUser) {
+      user = localUser;
+    } else if (authUser) {
+      user = { 
+        name: authUser.user_metadata?.name || authUser.email?.split('@')[0] || 'User',
+        role: authUser.email === '41147332a@gmail.com' ? 'admin' : 'customer'
+      };
+    }
+  }
+
+  const handleLogout = () => {
+    logout(); // Initiates background signout and clears state synchronously
+    navigate('/login'); // Seamless React Router navigation
+  };
 
   const toggleTheme = () => {
     setTheme(theme === 'dark' ? 'light' : 'dark');
@@ -86,14 +108,33 @@ export default function Navbar({ lang, setLang, theme, setTheme }) {
 
             <div className="h-6 w-px bg-slate-300 dark:bg-slate-700 mx-1"></div>
 
-            <Link to="/login" className="flex items-center gap-2 text-sm font-bold text-slate-700 dark:text-slate-200 hover:text-primary dark:hover:text-accent transition-colors">
-              <LogIn size={18} />
-              {lang === 'ar' ? 'دخول' : 'Login'}
-            </Link>
-            <Link to="/signup" className="flex items-center gap-2 px-5 py-2.5 rounded-full bg-gradient-to-r from-primary to-accent text-white text-sm font-bold hover:scale-105 transition-all shadow-md">
-              <User size={18} />
-              {lang === 'ar' ? 'حساب جديد' : 'Sign Up'}
-            </Link>
+            {user ? (
+              <div className="flex items-center gap-4 ml-2">
+                <Link to="/profile" className="flex items-center gap-2 text-sm font-bold text-slate-700 dark:text-slate-200 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 px-4 py-2 rounded-full transition-colors">
+                  <User size={18} className="text-primary" />
+                  <span>{user.name.split(' ')[0]}</span>
+                </Link>
+                {user.role === 'admin' && (
+                  <Link to="/admin" className="text-sm font-bold text-primary hover:text-accent transition-colors">
+                    {lang === 'ar' ? 'لوحة التحكم' : 'Admin'}
+                  </Link>
+                )}
+                <button onClick={handleLogout} className="text-sm font-bold text-red-500 hover:text-red-600 transition-colors">
+                  {lang === 'ar' ? 'خروج' : 'Logout'}
+                </button>
+              </div>
+            ) : (
+              <>
+                <Link to="/login" className="flex items-center gap-2 text-sm font-bold text-slate-700 dark:text-slate-200 hover:text-primary dark:hover:text-accent transition-colors">
+                  <LogIn size={18} />
+                  {lang === 'ar' ? 'دخول' : 'Login'}
+                </Link>
+                <Link to="/signup" className="flex items-center gap-2 px-5 py-2.5 rounded-full bg-gradient-to-r from-primary to-accent text-white text-sm font-bold hover:scale-105 transition-all shadow-md">
+                  <User size={18} />
+                  {lang === 'ar' ? 'حساب جديد' : 'Sign Up'}
+                </Link>
+              </>
+            )}
           </div>
 
           {/* Mobile menu button */}
@@ -143,14 +184,33 @@ export default function Navbar({ lang, setLang, theme, setTheme }) {
             <div className="my-4 border-t border-slate-200 dark:border-slate-800"></div>
             
             <div className="flex flex-col gap-3 mt-4">
-              <Link to="/login" onClick={closeMenu} className="flex items-center justify-center gap-2 w-full py-3 rounded-xl border border-primary dark:border-accent text-primary dark:text-accent font-bold">
-                <LogIn size={20} />
-                {lang === 'ar' ? 'تسجيل الدخول' : 'Login'}
-              </Link>
-              <Link to="/signup" onClick={closeMenu} className="flex items-center justify-center gap-2 w-full py-3 rounded-xl bg-gradient-to-r from-primary to-accent text-white font-bold shadow-md">
-                <User size={20} />
-                {lang === 'ar' ? 'إنشاء حساب جديد' : 'Create Account'}
-              </Link>
+              {user ? (
+                <>
+                  <Link to="/profile" onClick={closeMenu} className="flex items-center justify-center gap-2 w-full py-3 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-bold transition-colors">
+                    <User size={20} className="text-primary" />
+                    {user.name}
+                  </Link>
+                  {user.role === 'admin' && (
+                    <Link to="/admin" onClick={closeMenu} className="flex items-center justify-center gap-2 w-full py-3 rounded-xl border border-primary text-primary font-bold">
+                      {lang === 'ar' ? 'لوحة التحكم' : 'Admin Dashboard'}
+                    </Link>
+                  )}
+                  <button onClick={handleLogout} className="flex items-center justify-center gap-2 w-full py-3 rounded-xl bg-red-50 text-red-500 font-bold">
+                    {lang === 'ar' ? 'تسجيل الخروج' : 'Logout'}
+                  </button>
+                </>
+              ) : (
+                <>
+                  <Link to="/login" onClick={closeMenu} className="flex items-center justify-center gap-2 w-full py-3 rounded-xl border border-primary dark:border-accent text-primary dark:text-accent font-bold">
+                    <LogIn size={20} />
+                    {lang === 'ar' ? 'تسجيل الدخول' : 'Login'}
+                  </Link>
+                  <Link to="/signup" onClick={closeMenu} className="flex items-center justify-center gap-2 w-full py-3 rounded-xl bg-gradient-to-r from-primary to-accent text-white font-bold shadow-md">
+                    <User size={20} />
+                    {lang === 'ar' ? 'إنشاء حساب جديد' : 'Create Account'}
+                  </Link>
+                </>
+              )}
             </div>
           </div>
         </div>

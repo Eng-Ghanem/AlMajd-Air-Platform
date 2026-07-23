@@ -81,43 +81,30 @@ export default function Testimonials({ lang }) {
         </div>
 
         {/* Video Showcase Section */}
-        <motion.div 
-          initial={{ opacity: 0, scale: 0.95 }}
-          whileInView={{ opacity: 1, scale: 1 }}
-          viewport={{ once: true, amount: 0.3 }}
-          transition={{ duration: 0.7 }}
-          className="mb-24 relative max-w-5xl mx-auto"
-        >
-          {/* Custom Video Placeholder */}
-          <div className="group relative aspect-video rounded-[2.5rem] bg-slate-900 overflow-hidden shadow-[0_20px_50px_rgba(0,180,216,0.2)] border border-slate-700/50 cursor-pointer">
-            {/* Thumbnail Image */}
-            <img 
-              src="/images/ac_installation_1783547788466.png" 
-              alt="AC Installation Showcase" 
-              className="w-full h-full object-cover opacity-80 group-hover:scale-105 transition-transform duration-700"
-            />
-            
-            {/* Dark Overlay with Blur */}
-            <div className="absolute inset-0 bg-gradient-to-t from-midnight via-midnight/40 to-transparent opacity-90 z-10"></div>
-            
-            {/* Play Button */}
-            <div className="absolute inset-0 flex items-center justify-center z-20">
-              <div className="w-24 h-24 rounded-full bg-white/20 backdrop-blur-md border border-white/30 flex items-center justify-center group-hover:bg-primary/90 group-hover:scale-110 transition-all duration-500 shadow-[0_0_40px_rgba(0,180,216,0.4)] group-hover:shadow-[0_0_60px_rgba(0,180,216,0.8)]">
-                <Play size={40} className="text-white ml-2" fill="currentColor" />
-              </div>
-            </div>
-
-            {/* Video Title */}
-            <div className="absolute bottom-8 left-8 right-8 z-20">
-              <h3 className="text-2xl sm:text-3xl font-bold text-white mb-2 drop-shadow-lg">
-                {isAr ? 'كيف يتم تركيب وتأسيس المكيفات بخطوات احترافية؟' : 'How AC Installation is Done Professionally?'}
-              </h3>
-              <p className="text-slate-300 font-medium">
-                {isAr ? 'لمحة سريعة لعملية التأسيس' : 'A quick glimpse of the setup process'}
-              </p>
-            </div>
+        <div className="mb-24">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {[1, 2, 3].map((num) => (
+              <motion.div 
+                key={num}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, amount: 0.3 }}
+                transition={{ duration: 0.5, delay: num * 0.1 }}
+                className="group relative aspect-[9/16] md:aspect-auto md:h-[500px] rounded-[2rem] bg-black overflow-hidden shadow-[0_10px_30px_rgba(0,180,216,0.15)] border border-slate-800 dark:border-slate-700/50 hover:shadow-[0_15px_40px_rgba(0,180,216,0.25)] transition-all duration-500"
+              >
+                <video 
+                  src={`/videos/video${num}.mp4#t=0.001`} 
+                  className="w-full h-full object-contain"
+                  controls
+                  controlsList="nodownload"
+                  playsInline
+                  preload="metadata"
+                  onContextMenu={(e) => e.preventDefault()}
+                />
+              </motion.div>
+            ))}
           </div>
-        </motion.div>
+        </div>
 
         {/* Testimonials Grid */}
         <motion.div 

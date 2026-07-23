@@ -1,23 +1,39 @@
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { Mail, Lock, Loader2, ArrowRight } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { Mail, Lock, Loader2, ArrowRight, Eye, EyeOff } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { useAuth } from '../context/AuthContext';
 
 export default function LoginPage({ lang }) {
   const isAr = lang === 'ar';
+  const { login } = useAuth();
+  
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
-  const navigate = useNavigate();
+  const [error, setError] = useState('');
 
   const handleLogin = async (e) => {
     e.preventDefault();
     setLoading(true);
-    // TODO: Supabase login integration
-    setTimeout(() => {
+    setError('');
+    
+    try {
+      const { data, error: loginError } = await login(email, password);
+      if (loginError) throw loginError;
+      
+      window.location.href = '/'; // Hard redirect to update Navbar state
+    } catch (err) {
+      console.error('Login error:', err);
+      let errorMessage = err.message || 'Failed to login';
+      if (errorMessage.includes('Invalid login credentials')) {
+        errorMessage = isAr ? 'البريد الإلكتروني أو كلمة المرور غير صحيحة.' : 'Invalid email or password.';
+      }
+      setError(errorMessage);
+    } finally {
       setLoading(false);
-      navigate('/');
-    }, 1000);
+    }
   };
 
   return (
@@ -35,6 +51,12 @@ export default function LoginPage({ lang }) {
             {isAr ? 'قم بتسجيل الدخول للوصول إلى حسابك' : 'Sign in to access your account'}
           </p>
         </div>
+
+        {error && (
+          <div className="bg-red-50 text-red-600 p-3 rounded-lg text-sm font-semibold text-center">
+            {error}
+          </div>
+        )}
 
         <form className="mt-8 space-y-6" onSubmit={handleLogin}>
           <div className="space-y-4">
@@ -58,21 +80,33 @@ export default function LoginPage({ lang }) {
             </div>
 
             <div>
-              <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">
-                {isAr ? 'كلمة المرور' : 'Password'}
-              </label>
+              <div className="flex justify-between items-center mb-2">
+                <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300">
+                  {isAr ? 'كلمة المرور' : 'Password'}
+                </label>
+                <Link to="/forgot-password" className="text-sm font-bold text-primary hover:text-accent transition-colors">
+                  {isAr ? 'نسيت كلمة المرور؟' : 'Forgot password?'}
+                </Link>
+              </div>
               <div className="relative">
                 <div className={`absolute inset-y-0 ${isAr ? 'right-0 pr-3' : 'left-0 pl-3'} flex items-center pointer-events-none`}>
                   <Lock className="h-5 w-5 text-slate-400" />
                 </div>
                 <input
-                  type="password"
+                  type={showPassword ? 'text' : 'password'}
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className={`w-full ${isAr ? 'pr-10 pl-3' : 'pl-10 pr-3'} py-3 border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all`}
+                  className={`w-full ${isAr ? 'pr-10 pl-10' : 'pl-10 pr-10'} py-3 border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all`}
                   placeholder="••••••••"
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className={`absolute inset-y-0 ${isAr ? 'left-0 pl-3' : 'right-0 pr-3'} flex items-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors`}
+                >
+                  {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                </button>
               </div>
             </div>
           </div>

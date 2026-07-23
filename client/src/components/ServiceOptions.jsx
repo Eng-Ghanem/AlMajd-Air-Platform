@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { PackageCheck, Home, Truck } from 'lucide-react';
+import { PackageCheck, Home, Wrench } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 export default function ServiceOptions({ lang }) {
@@ -27,11 +27,11 @@ export default function ServiceOptions({ lang }) {
     },
     {
       id: 3,
-      title: isAr ? 'خدمة توصيل' : 'Delivery Service',
+      title: isAr ? 'خدمات الصيانة' : 'Maintenance Services',
       description: isAr
-        ? 'خدمة توصيل سريعة وموثوقة لجميع قطع الغيار والوحدات لأي مكان.'
-        : 'Fast and reliable delivery service for all spare parts and units anywhere.',
-      icon: <Truck size={36} className="text-white" />,
+        ? 'خدمة صيانة دورية وإصلاح فوري لجميع أعطال التكييفات بقطع غيار أصلية.'
+        : 'Regular maintenance and immediate repair service for all AC faults with original spare parts.',
+      icon: <Wrench size={36} className="text-white" />,
       color: 'from-primary to-accent'
     }
   ];
