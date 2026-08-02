@@ -37,7 +37,7 @@ export default function Home({ lang }) {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.2 }}
-              className="text-6xl sm:text-8xl font-black tracking-tighter text-slate-900 dark:text-white mb-8 leading-tight"
+              className="text-5xl md:text-7xl lg:text-8xl font-black tracking-tighter text-slate-900 dark:text-white mb-6 lg:mb-8 leading-tight"
             >
               {isAr ? 'مرحباً بكم في ' : 'Welcome to '}
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-accent drop-shadow-sm">
@@ -48,7 +48,7 @@ export default function Home({ lang }) {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.4 }}
-              className="mt-8 text-2xl sm:text-3xl text-slate-700 dark:text-slate-200 max-w-4xl mx-auto leading-relaxed font-medium drop-shadow-md"
+              className="mt-6 lg:mt-8 text-xl md:text-2xl lg:text-3xl text-slate-700 dark:text-slate-200 max-w-4xl mx-auto leading-relaxed font-medium drop-shadow-md px-2"
             >
               {isAr 
                 ? 'منصتك الاحترافية الشاملة لجميع خدمات التكييف. جودة عالية وأداء لا يضاهى يطابق المعايير العالمية.' 
@@ -63,13 +63,13 @@ export default function Home({ lang }) {
             >
               <a 
                 href="#contact" 
-                className="px-10 py-4 rounded-full bg-gradient-to-r from-primary to-accent text-white font-bold text-xl hover:scale-105 transition-all duration-300 shadow-[0_0_40px_-10px_rgba(0,180,216,0.6)] hover:shadow-[0_0_60px_-15px_rgba(0,180,216,0.9)]"
+                className="w-full sm:w-auto px-8 lg:px-10 py-4 rounded-full bg-gradient-to-r from-primary to-accent text-white font-bold text-lg lg:text-xl text-center flex items-center justify-center hover:scale-105 transition-all duration-300 shadow-[0_0_40px_-10px_rgba(0,180,216,0.6)] hover:shadow-[0_0_60px_-15px_rgba(0,180,216,0.9)]"
               >
                 {isAr ? 'اتصل بنا للحجز' : 'Contact to Book'}
               </a>
               <Link 
                 to="/services" 
-                className="px-10 py-4 rounded-full bg-white/80 dark:bg-midnight/80 backdrop-blur-md text-slate-900 dark:text-white font-bold text-xl hover:scale-105 transition-all duration-300 shadow-xl border border-slate-200 dark:border-slate-700 hover:border-accent dark:hover:border-accent group"
+                className="w-full sm:w-auto px-8 lg:px-10 py-4 rounded-full bg-white/80 dark:bg-midnight/80 backdrop-blur-md text-slate-900 dark:text-white font-bold text-lg lg:text-xl text-center flex items-center justify-center hover:scale-105 transition-all duration-300 shadow-xl border border-slate-200 dark:border-slate-700 hover:border-accent dark:hover:border-accent group"
               >
                 <span className="group-hover:text-transparent group-hover:bg-clip-text group-hover:bg-gradient-to-r group-hover:from-primary group-hover:to-accent transition-all duration-300">
                   {isAr ? 'تصفح خدماتنا' : 'Explore Services'}

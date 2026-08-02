@@ -174,8 +174,8 @@ export default function Navbar({ lang, setLang, theme, setTheme }) {
 
       {/* Mobile Menu Dropdown */}
       {isMenuOpen && (
-        <div className="lg:hidden bg-white dark:bg-midnight border-b border-slate-200 dark:border-slate-800 shadow-xl overflow-y-auto max-h-[calc(100vh-80px)] transition-all">
-          <div className="px-4 pt-2 pb-6 space-y-2">
+        <div className="lg:hidden bg-white/95 dark:bg-midnight/95 backdrop-blur-3xl border-b border-slate-200 dark:border-slate-800 shadow-2xl overflow-y-auto max-h-[calc(100vh-80px)] transition-all">
+          <div className="px-4 sm:px-6 pt-4 pb-8 space-y-2">
             <NavLink to="/" className={mobileNavLinkClass} onClick={closeMenu}>
               {lang === 'ar' ? 'الرئيسية' : 'Home'}
             </NavLink>
