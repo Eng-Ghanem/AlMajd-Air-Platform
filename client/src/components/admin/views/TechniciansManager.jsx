@@ -10,14 +10,8 @@ export default function TechniciansManager({ isAr }) {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
-
-  const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    phone: '',
-    password: ''
-  });
+  const [allUsers, setAllUsers] = useState([]);
+  const [selectedUserId, setSelectedUserId] = useState('');
 
   useEffect(() => {
     fetchTechnicians();
@@ -28,11 +22,11 @@ export default function TechniciansManager({ isAr }) {
       setLoading(true);
       const { data, error } = await supabase
         .from('users')
-        .select('*')
-        .eq('role', 'technician');
+        .select('*');
       
       if (error) throw error;
-      setTechnicians(data || []);
+      setTechnicians((data || []).filter(u => u.role === 'technician'));
+      setAllUsers((data || []).filter(u => u.role !== 'technician'));
     } catch (err) {
       console.error('Error fetching technicians:', err);
     } finally {
@@ -40,31 +34,27 @@ export default function TechniciansManager({ isAr }) {
     }
   };
 
-  const handleChange = (e) => {
-    setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
-  };
-
   const handleAddTechnician = async (e) => {
     e.preventDefault();
+    if (!selectedUserId) {
+      setError(isAr ? 'يرجى اختيار مستخدم' : 'Please select a user');
+      return;
+    }
+    
     setSubmitting(true);
     setError('');
     setSuccess('');
 
     try {
-      const response = await fetch(`http://${window.location.hostname}:5000/api/admin/technicians`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData)
-      });
+      const { error } = await supabase
+        .from('users')
+        .update({ role: 'technician' })
+        .eq('id', selectedUserId);
 
-      const result = await response.json();
+      if (error) throw error;
 
-      if (!response.ok) {
-        throw new Error(result.error || 'Failed to create technician');
-      }
-
-      setSuccess(isAr ? 'تم إضافة الفني بنجاح!' : 'Technician added successfully!');
-      setFormData({ name: '', email: '', phone: '', password: '' });
+      setSuccess(isAr ? 'تم تحويل المستخدم إلى فني بنجاح!' : 'User converted to technician successfully!');
+      setSelectedUserId('');
       fetchTechnicians(); // Refresh list
 
       setTimeout(() => {
@@ -195,92 +185,21 @@ export default function TechniciansManager({ isAr }) {
                 <form onSubmit={handleAddTechnician} className="space-y-4">
                   <div>
                     <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">
-                      {isAr ? 'الاسم بالكامل' : 'Full Name'}
+                      {isAr ? 'اختر المستخدم للترقية' : 'Select User to Upgrade'}
                     </label>
                     <div className="relative">
-                      <div className={`absolute inset-y-0 ${isAr ? 'right-0 pr-3' : 'left-0 pl-3'} flex items-center pointer-events-none`}>
-                        <Users className="h-5 w-5 text-slate-400" />
-                      </div>
-                      <input
-                        type="text"
-                        name="name"
-                        required
-                        value={formData.name}
-                        onChange={handleChange}
-                        className={`w-full ${isAr ? 'pr-10 pl-3' : 'pl-10 pr-3'} py-3 border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all`}
-                        placeholder={isAr ? 'اسم الفني' : 'Technician Name'}
-                      />
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">
-                      {isAr ? 'البريد الإلكتروني' : 'Email Address'}
-                    </label>
-                    <div className="relative">
-                      <div className={`absolute inset-y-0 ${isAr ? 'right-0 pr-3' : 'left-0 pl-3'} flex items-center pointer-events-none`}>
-                        <Mail className="h-5 w-5 text-slate-400" />
-                      </div>
-                      <input
-                        type="email"
-                        name="email"
-                        required
-                        value={formData.email}
-                        onChange={handleChange}
-                        className={`w-full ${isAr ? 'pr-10 pl-3' : 'pl-10 pr-3'} py-3 border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all`}
-                        placeholder="tech@almajd-air.com"
-                      />
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">
-                      {isAr ? 'رقم الهاتف' : 'Phone Number'}
-                    </label>
-                    <div className="relative">
-                      <div className={`absolute inset-y-0 ${isAr ? 'right-0 pr-3' : 'left-0 pl-3'} flex items-center pointer-events-none`}>
-                        <Phone className="h-5 w-5 text-slate-400" />
-                      </div>
-                      <input
-                        type="tel"
-                        name="phone"
-                        required
-                        maxLength={11}
-                        pattern="[0-9]{11}"
-                        value={formData.phone}
-                        onChange={handleChange}
-                        className={`w-full ${isAr ? 'pr-10 pl-3' : 'pl-10 pr-3'} py-3 border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all text-left`}
-                        dir="ltr"
-                        placeholder="010XXXXXXXX"
-                      />
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">
-                      {isAr ? 'كلمة المرور' : 'Password'}
-                    </label>
-                    <div className="relative">
-                      <div className={`absolute inset-y-0 ${isAr ? 'right-0 pr-3' : 'left-0 pl-3'} flex items-center pointer-events-none`}>
-                        <Lock className="h-5 w-5 text-slate-400" />
-                      </div>
-                      <input
-                        type={showPassword ? 'text' : 'password'}
-                        name="password"
-                        required
-                        minLength={6}
-                        value={formData.password}
-                        onChange={handleChange}
-                        className={`w-full ${isAr ? 'pr-10 pl-10' : 'pl-10 pr-10'} py-3 border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all`}
-                        placeholder="••••••••"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setShowPassword(!showPassword)}
-                        className={`absolute inset-y-0 ${isAr ? 'left-0 pl-3' : 'right-0 pr-3'} flex items-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors`}
+                      <select
+                        value={selectedUserId}
+                        onChange={(e) => setSelectedUserId(e.target.value)}
+                        className={`w-full py-3 border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all px-4`}
                       >
-                        {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
-                      </button>
+                        <option value="">{isAr ? '--- اختر مستخدم ---' : '--- Select a User ---'}</option>
+                        {allUsers.map(u => (
+                          <option key={u.id} value={u.id}>
+                            {u.name} ({u.email || u.phone})
+                          </option>
+                        ))}
+                      </select>
                     </div>
                   </div>
 
@@ -296,7 +215,7 @@ export default function TechniciansManager({ isAr }) {
                           {isAr ? 'جاري الإضافة...' : 'Adding...'}
                         </>
                       ) : (
-                        isAr ? 'إنشاء حساب الفني' : 'Create Technician Account'
+                        isAr ? 'ترقية إلى فني' : 'Upgrade to Technician'
                       )}
                     </button>
                   </div>

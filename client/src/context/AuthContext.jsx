@@ -110,16 +110,7 @@ export const AuthProvider = ({ children }) => {
        const { error: dbError } = await supabase.from('users').upsert([userProfile]);
        
        if (dbError) {
-         console.warn("Direct insert failed (RLS maybe), falling back to backend...", dbError);
-         try {
-           await fetch(`http://${window.location.hostname}:5000/api/auth/sync-user`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify(userProfile)
-           });
-         } catch (err) {
-           console.error("Backend sync failed", err);
-         }
+         console.warn("Direct insert failed", dbError);
        }
     }
     return { data, error };
@@ -152,19 +143,9 @@ export const AuthProvider = ({ children }) => {
         .eq('id', userId)
         .select();
         
-      // If direct update fails (error) or silently fails (0 rows updated due to RLS), fallback to backend
+      // If direct update fails (error) or silently fails (0 rows updated due to RLS)
       if (updateError || !updateData || updateData.length === 0) {
-        console.warn('Direct profile update failed or blocked by RLS, falling back to backend...');
-        const fullProfile = { ...(profile || {}), ...updates };
-        try {
-          await fetch(`http://${window.location.hostname}:5000/api/auth/sync-user`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(fullProfile)
-          });
-        } catch (err) {
-          console.error("Backend sync failed during profile update", err);
-        }
+        console.warn('Direct profile update failed or blocked by RLS.');
       }
         
       // 3. Force UI update

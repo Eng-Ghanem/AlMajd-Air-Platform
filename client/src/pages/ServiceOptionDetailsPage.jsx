@@ -3,6 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import { ArrowRight, ArrowLeft, PackageCheck, Home, Wrench, CreditCard, Banknote, Info, CheckCircle2 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import SmartPaymentSystem from '../components/SmartPaymentSystem';
+import { supabase } from '../lib/supabase';
 
 export default function ServiceOptionDetailsPage({ lang }) {
   const { id } = useParams();
@@ -12,9 +13,9 @@ export default function ServiceOptionDetailsPage({ lang }) {
 
   useEffect(() => {
     if (id === '3' || parseInt(id) >= 11) {
-      fetch(`http://${window.location.hostname}:5000/api/device-prices`)
-        .then(res => res.json())
-        .then(data => {
+      supabase.from('device_prices').select('*')
+        .then(({ data, error }) => {
+          if (error) throw error;
           let serviceDbId = 'service_maintenance';
           if (id === '11') serviceDbId = 'service_installation';
           else if (id === '12' || id === '3') serviceDbId = 'service_maintenance';

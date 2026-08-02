@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { CheckCircle2, Phone, User, Settings, Banknote, Calendar, MessageSquare, Plus, ArrowRight, ArrowLeft, Clock, XCircle, Search, Filter } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { supabase } from '../lib/supabase';
 
 export default function TechnicianPage({ lang }) {
   const isAr = lang === 'ar';
@@ -25,11 +26,13 @@ export default function TechnicianPage({ lang }) {
   const fetchRequests = async () => {
     try {
       setLoading(true);
-      const res = await fetch(`http://${window.location.hostname}:5000/api/requests`);
-      if (res.ok) {
-        const data = await res.json();
-        setRequests(data);
-      }
+      const { data, error } = await supabase
+        .from('service_requests')
+        .select('*')
+        .order('created_at', { ascending: false });
+        
+      if (error) throw error;
+      setRequests(data || []);
     } catch (err) {
       console.error('Failed to fetch requests:', err);
     } finally {
@@ -43,15 +46,15 @@ export default function TechnicianPage({ lang }) {
 
   const handleUpdateStatus = async (id, newStatus) => {
     try {
-      const response = await fetch(`http://${window.location.hostname}:5000/api/requests/${id}/status`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: newStatus })
-      });
-      if (response.ok) {
+      const { error } = await supabase
+        .from('service_requests')
+        .update({ status: newStatus })
+        .eq('id', id);
+        
+      if (!error) {
         fetchRequests();
       } else {
-        alert(isAr ? 'حدث خطأ أثناء تحديث الحالة' : 'Error updating status');
+        throw error;
       }
     } catch (error) {
       console.error('Update status error:', error);
@@ -73,22 +76,42 @@ export default function TechnicianPage({ lang }) {
     
     setIsAdding(true);
     try {
-      const payload = { ...newRequest, status: 'paid' };
-      const response = await fetch(`http://${window.location.hostname}:5000/api/admin/requests`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      });
-      if (response.ok) {
-        setSuccess(true);
-        setTimeout(() => {
-          setSuccess(false);
-          setNewRequest({ name: '', phone: '', serviceType: isAr ? 'تأسيس وتركيب' : 'Installation', date: '', totalPrice: '', message: '' });
-          navigate('/');
-        }, 3000);
-      } else {
-        alert(isAr ? 'حدث خطأ أثناء إضافة الطلب' : 'Error adding request');
+      const payload = {
+        name: newRequest.name,
+        phone: newRequest.phone,
+        service_type: newRequest.serviceType,
+        message: newRequest.message || `Cash collection by technician. Date: ${newRequest.date || new Date().toISOString()}`,
+        total_price: Number(newRequest.totalPrice),
+        status: 'paid'
+      };
+      
+      const { data, error } = await supabase
+        .from('service_requests')
+        .insert([payload])
+        .select()
+        .single();
+        
+      if (error) throw error;
+      
+      const paymentPayload = {
+        request_id: data.id,
+        amount: Number(newRequest.totalPrice),
+        status: 'completed',
+        method: 'cash'
+      };
+      
+      let { error: paymentError } = await supabase.from('payments').insert([paymentPayload]);
+      if (paymentError && paymentError.message.includes('method')) {
+          delete paymentPayload.method;
+          await supabase.from('payments').insert([paymentPayload]);
       }
+      
+      setSuccess(true);
+      setTimeout(() => {
+        setSuccess(false);
+        setNewRequest({ name: '', phone: '', serviceType: isAr ? 'تأسيس وتركيب' : 'Installation', date: '', totalPrice: '', message: '' });
+        navigate('/');
+      }, 3000);
     } catch (error) {
       console.error('Add request error:', error);
       alert(isAr ? 'حدث خطأ في الاتصال بالسيرفر' : 'Server connection error');

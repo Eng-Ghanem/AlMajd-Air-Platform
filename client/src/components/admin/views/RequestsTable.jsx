@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Search, Filter, MoreVertical, CheckCircle2, XCircle, Clock, X, MessageSquare, Phone, User, Calendar, Trash2 } from 'lucide-react';
+import { supabase } from '../../../lib/supabase';
 
 export default function RequestsTable({ isAr, requests, loading, fetchRequests, openRequestId, setOpenRequestId }) {
   const [searchTerm, setSearchTerm] = useState('');
@@ -29,20 +30,20 @@ export default function RequestsTable({ isAr, requests, loading, fetchRequests, 
 
   const handleUpdateStatus = async (id, newStatus) => {
     try {
-      const response = await fetch(`http://${window.location.hostname}:5000/api/requests/${id}/status`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: newStatus })
-      });
-      if (response.ok) {
+      const { error } = await supabase
+        .from('service_requests')
+        .update({ status: newStatus })
+        .eq('id', id);
+        
+      if (!error) {
         if (fetchRequests) fetchRequests();
         setSelectedRequest(prev => ({ ...prev, status: newStatus }));
       } else {
-        alert(isAr ? 'حدث خطأ أثناء تحديث الحالة، يرجى التأكد من اتصال الإنترنت' : 'Error updating status, please check connection');
+        throw error;
       }
     } catch (error) {
       console.error('Update status error:', error);
-      alert(isAr ? 'حدث خطأ في الاتصال بالسيرفر' : 'Server connection error');
+      alert(isAr ? 'حدث خطأ في تحديث الحالة' : 'Error updating status');
     }
   };
 
@@ -50,16 +51,20 @@ export default function RequestsTable({ isAr, requests, loading, fetchRequests, 
     if (!deleteConfirmId) return;
     setIsDeleting(true);
     try {
-      const response = await fetch(`http://localhost:5000/api/requests/${deleteConfirmId}`, { method: 'DELETE' });
-      if (response.ok) {
+      const { error } = await supabase
+        .from('service_requests')
+        .delete()
+        .eq('id', deleteConfirmId);
+        
+      if (!error) {
         if (fetchRequests) fetchRequests();
         setDeleteConfirmId(null);
       } else {
-        alert(isAr ? 'حدث خطأ أثناء الحذف، يرجى التأكد من اتصال الإنترنت' : 'Error deleting request, please check connection');
+        throw error;
       }
     } catch (error) {
       console.error('Delete error:', error);
-      alert(isAr ? 'حدث خطأ في الاتصال بالسيرفر' : 'Server connection error');
+      alert(isAr ? 'حدث خطأ في الحذف' : 'Error deleting request');
     } finally {
       setIsDeleting(false);
     }

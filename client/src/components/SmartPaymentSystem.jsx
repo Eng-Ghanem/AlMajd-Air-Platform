@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Calendar, MapPin, CreditCard, Banknote, ChevronRight, ChevronLeft, CheckCircle2, ShieldCheck, Loader2, AlertCircle, Phone, PackageCheck, Upload } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { supabase } from '../lib/supabase';
 import { useSearchParams } from 'react-router-dom';
 
 const defaultDevices = [
@@ -51,12 +52,12 @@ export default function SmartPaymentSystem({ isAr, optionTitle, basePrice = 0, r
 
   useEffect(() => {
     if (requiresDeviceSelection) {
-      fetch(`http://${window.location.hostname}:5000/api/device-prices`)
-        .then(res => res.json())
-        .then(dbPrices => {
-          setAllPrices(dbPrices);
+      supabase.from('device_prices').select('*')
+        .then(({ data: dbPrices, error }) => {
+          if (error) throw error;
+          setAllPrices(dbPrices || []);
           const merged = defaultDevices.map(d => {
-            const match = dbPrices.find(p => p.id === d.id);
+            const match = (dbPrices || []).find(p => p.id === d.id);
             return match ? { ...d, price: match.price, discount_percentage: match.discount_percentage } : d;
           });
           setDevices(merged);
@@ -191,22 +192,56 @@ export default function SmartPaymentSystem({ isAr, optionTitle, basePrice = 0, r
       if (paymentMethod === 'card') {
          finalPaymentMethod = exactMethod;
       }
-      const res = await fetch(`http://${window.location.hostname}:5000/api/requests`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: user.name, phone: phone, serviceType: optionTitle, message: message, totalPrice: finalPrice, paymentMethod: finalPaymentMethod })
-      });
-      const data = await res.json();
-      if (res.ok) {
-        setBookingId(data.id || Math.floor(1000 + Math.random() * 9000));
-        nextStep(); 
-      } else {
-        const errorDetail = data.error || data.message || res.statusText;
-        alert(isAr ? `حدث خطأ أثناء الحجز: ${errorDetail}` : `Error creating booking: ${errorDetail}`);
+      
+      const payload = { 
+        name: user.name, 
+        phone: phone, 
+        service_type: optionTitle, 
+        message: message, 
+        total_price: Math.round(Number(finalPrice) || 0) 
+      };
+      
+      const { data, error } = await supabase
+        .from('service_requests')
+        .insert([payload])
+        .select()
+        .single();
+        
+      if (error) throw error;
+      
+      if (finalPaymentMethod) {
+        const paymentPayload = { 
+          request_id: data.id, 
+          amount: Math.round(Number(finalPrice) || 0), 
+          status: 'completed',
+          method: finalPaymentMethod
+        };
+        
+        let { error: paymentError } = await supabase
+          .from('payments')
+          .insert([paymentPayload]);
+          
+        if (paymentError && paymentError.message.includes('method')) {
+          delete paymentPayload.method;
+          const { error: fallbackError } = await supabase
+            .from('payments')
+            .insert([paymentPayload]);
+          paymentError = fallbackError;
+        }
+        
+        if (!paymentError) {
+          await supabase
+            .from('service_requests')
+            .update({ status: 'paid' })
+            .eq('id', data.id);
+        }
       }
+
+      setBookingId(data.id || Math.floor(1000 + Math.random() * 9000));
+      nextStep(); 
     } catch (err) {
       console.error(err);
-      alert(isAr ? `فشل الاتصال بالخادم: ${err.message}` : `Server connection failed: ${err.message}`);
+      alert(isAr ? `فشل الاتصال: ${err.message}` : `Connection failed: ${err.message}`);
     }
     setLoading(false);
   };

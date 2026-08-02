@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Save, Search, RefreshCw, Tag, DollarSign, Percent } from 'lucide-react';
+import { supabase } from '../../../lib/supabase';
 
 // Default devices metadata to match IDs
 const defaultDevicesInfo = [
@@ -50,12 +51,12 @@ export default function PricesManager({ isAr }) {
   const fetchPrices = async () => {
     try {
       setLoading(true);
-      const res = await fetch(`http://${window.location.hostname}:5000/api/device-prices`);
-      const dbPrices = await res.json();
+      const { data: dbPrices, error } = await supabase.from('device_prices').select('*');
+      if (error) throw error;
       
-      // Merge dbPrices with defaultDevicesInfo
+      // Merge (dbPrices || []) with defaultDevicesInfo
       const mergedData = defaultDevicesInfo.map(device => {
-        const dbPrice = dbPrices.find(p => p.id === device.id);
+        const dbPrice = (dbPrices || []).find(p => p.id === device.id);
         return {
           ...device,
           price: dbPrice ? Number(dbPrice.price) : 0,
@@ -88,15 +89,13 @@ export default function PricesManager({ isAr }) {
         id, price, discount_percentage
       }));
       
-      const res = await fetch(`http://${window.location.hostname}:5000/api/device-prices`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prices: pricesToSave })
-      });
+      const { error } = await supabase.from('device_prices').upsert(pricesToSave, { onConflict: 'id' });
       
-      if (res.ok) {
+      if (!error) {
         setSaveSuccess(true);
         setTimeout(() => setSaveSuccess(false), 3000);
+      } else {
+        throw error;
       }
     } catch (error) {
       console.error('Error saving prices:', error);

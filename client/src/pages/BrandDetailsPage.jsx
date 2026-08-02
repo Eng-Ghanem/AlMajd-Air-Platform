@@ -3,6 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import { ArrowRight, ArrowLeft, CheckCircle } from 'lucide-react';
 import { motion } from 'framer-motion';
 import ServiceSelectionModal from '../components/ServiceSelectionModal';
+import { supabase } from '../lib/supabase';
 
 export default function BrandDetailsPage({ lang }) {
   const { id } = useParams();
@@ -13,9 +14,11 @@ export default function BrandDetailsPage({ lang }) {
   const [prices, setPrices] = useState([]);
   
   useEffect(() => {
-    fetch(`http://${window.location.hostname}:5000/api/device-prices`)
-      .then(res => res.json())
-      .then(data => setPrices(data))
+    supabase.from('device_prices').select('*')
+      .then(({ data, error }) => {
+        if (error) throw error;
+        setPrices(data || []);
+      })
       .catch(err => console.error('Failed to load prices', err));
   }, []);
 

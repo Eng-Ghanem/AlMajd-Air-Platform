@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
+import { supabase } from '../lib/supabase';
 
 // Layout Components
 import Sidebar from '../components/admin/Sidebar';
@@ -35,16 +36,16 @@ export default function AdminDashboard({ lang, setLang, theme, setTheme }) {
     try {
       setLoading(true);
       const [reqRes, usersRes, payRes, subRes] = await Promise.all([
-        fetch(`http://${window.location.hostname}:5000/api/requests`),
-        fetch(`http://${window.location.hostname}:5000/api/users`),
-        fetch(`http://${window.location.hostname}:5000/api/payments`),
-        fetch(`http://${window.location.hostname}:5000/api/subscriptions`)
+        supabase.from('service_requests').select('*').order('created_at', { ascending: false }),
+        supabase.from('users').select('*').order('created_at', { ascending: false }),
+        supabase.from('payments').select('*, service_requests(name, total_price)').order('created_at', { ascending: false }),
+        supabase.from('subscriptions').select('*').order('created_at', { ascending: false })
       ]);
 
-      if (reqRes.ok) setRequests(await reqRes.json());
-      if (usersRes.ok) setUsers(await usersRes.json());
-      if (payRes.ok) setPayments(await payRes.json());
-      if (subRes.ok) setSubscriptions(await subRes.json());
+      if (reqRes.data) setRequests(reqRes.data);
+      if (usersRes.data) setUsers(usersRes.data);
+      if (payRes.data) setPayments(payRes.data);
+      if (subRes.data) setSubscriptions(subRes.data);
 
     } catch (error) {
       console.error('Error fetching admin data:', error);
