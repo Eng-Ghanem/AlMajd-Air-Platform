@@ -389,30 +389,30 @@ export default function SmartPaymentSystem({ isAr, optionTitle, basePrice = 0, r
                       <p className="text-slate-500">{isAr ? 'يرجى إدخال تفاصيل الموعد والمكان.' : 'Please enter appointment and location details.'}</p>
                     </div>
                     {finalPrice > 0 && (
-                      <div className="bg-slate-50 dark:bg-slate-800/50 p-4 rounded-2xl border border-slate-100 dark:border-slate-700 min-w-[240px] w-full md:w-auto shrink-0 shadow-sm">
+                      <div className="bg-slate-50 dark:bg-slate-800/50 p-5 rounded-2xl border border-slate-200 dark:border-slate-700 min-w-[240px] w-full md:w-auto shrink-0 shadow-sm space-y-1">
                         {selectedInstallationPrice > 0 ? (
                           <>
-                            <div className="flex justify-between items-center mb-2 pb-2 border-b border-slate-200 dark:border-slate-700/50">
-                              <span className="text-sm text-slate-500">{isAr ? 'سعر الجهاز' : 'Device Price'}</span>
-                              <span className="font-semibold text-slate-700 dark:text-slate-300">
+                            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center pb-2 border-b border-slate-200 dark:border-slate-700/50 gap-1">
+                              <span className="text-sm text-slate-500 font-medium">{isAr ? 'سعر الجهاز' : 'Device Price'}</span>
+                              <span className="font-bold text-slate-700 dark:text-slate-300" dir="ltr">
                                 {new Intl.NumberFormat('en-EG', { style: 'currency', currency: 'EGP' }).format(selectedDevicePrice)}
                               </span>
                             </div>
-                            <div className="flex justify-between items-center mb-3 pb-2 border-b border-slate-200 dark:border-slate-700/50">
-                              <span className="text-sm text-slate-500">{isAr ? 'سعر التركيب' : 'Installation'}</span>
-                              <span className="font-semibold text-slate-700 dark:text-slate-300">
+                            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center pb-2 border-b border-slate-200 dark:border-slate-700/50 gap-1">
+                              <span className="text-sm text-slate-500 font-medium">{isAr ? 'سعر التركيب' : 'Installation'}</span>
+                              <span className="font-bold text-slate-700 dark:text-slate-300" dir="ltr">
                                 {new Intl.NumberFormat('en-EG', { style: 'currency', currency: 'EGP' }).format(selectedInstallationPrice)}
                               </span>
                             </div>
-                            <div className="flex justify-between items-center">
+                            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center pt-1 gap-1">
                               <span className="text-sm font-bold text-slate-900 dark:text-white">{isAr ? 'الإجمالي' : 'Total'}</span>
-                              <span className="font-black text-primary text-lg">{formattedPrice}</span>
+                              <span className="font-black text-primary text-xl" dir="ltr">{formattedPrice}</span>
                             </div>
                           </>
                         ) : (
-                          <div className="flex justify-between items-center">
+                          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-1">
                             <span className="text-sm font-bold text-slate-900 dark:text-white">{isAr ? 'الإجمالي' : 'Total'}</span>
-                            <span className="font-black text-primary text-xl">{formattedPrice}</span>
+                            <span className="font-black text-primary text-xl" dir="ltr">{formattedPrice}</span>
                           </div>
                         )}
                       </div>
@@ -442,7 +442,7 @@ export default function SmartPaymentSystem({ isAr, optionTitle, basePrice = 0, r
                       </div>
                     </div>
                   </div>
-                  <div className="flex gap-4 mt-auto pt-6 shrink-0">
+                  <div className="flex gap-4 mt-auto pt-8 pb-16 sm:pb-0 shrink-0">
                     {requiresDeviceSelection && !hasUrlSelection && (
                       <button onClick={() => setStep(0)} className="w-1/3 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-full py-4 font-bold text-[1.05rem] flex items-center justify-center gap-2 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors shadow-sm">
                         {isAr ? 'رجوع' : 'Back'}
@@ -526,28 +526,29 @@ export default function SmartPaymentSystem({ isAr, optionTitle, basePrice = 0, r
                     </div>
                   </div>
                   
-                  <div className="bg-slate-50 dark:bg-midnight-lighter p-4 rounded-xl border border-slate-200 dark:border-slate-700 mb-6 text-sm text-slate-700 dark:text-slate-300 space-y-3">
+                  <div className="bg-slate-50 dark:bg-midnight-lighter p-5 sm:p-6 rounded-2xl border border-slate-200 dark:border-slate-700 mb-6 space-y-4 shadow-sm">
                     <p className="font-bold text-slate-900 dark:text-white mb-2">{isAr ? 'يرجى تحويل المبلغ إلى أحد الحسابات التالية:' : 'Please transfer the amount to one of the following accounts:'}</p>
                     
-                    <div className="mb-4">
-                      <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">{isAr ? 'اختر وسيلة الدفع التي ستقوم بالتحويل منها:' : 'Select the payment method you will transfer from:'}</label>
-                      <select value={exactMethod} onChange={(e) => setExactMethod(e.target.value)} className="w-full bg-white dark:bg-midnight border border-slate-200 dark:border-slate-700 rounded-xl py-3 px-4 text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-primary">
+                    <div className="mb-5">
+                      <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">{isAr ? 'اختر وسيلة الدفع التي ستقوم بالتحويل منها:' : 'Select the payment method you will transfer from:'}</label>
+                      <select value={exactMethod} onChange={(e) => setExactMethod(e.target.value)} className="w-full bg-white dark:bg-midnight border border-slate-200 dark:border-slate-700 rounded-xl py-3.5 px-4 text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-primary shadow-sm font-medium">
                         <option value="instapay">إنستاباي - InstaPay</option>
                         <option value="vodafone_cash">فودافون كاش - Vodafone Cash</option>
                         <option value="we_cash">وي كاش - WE Cash</option>
                         <option value="etisalat_cash">اتصالات كاش - Etisalat Cash</option>
                         <option value="orange_cash">أورانج كاش - Orange Cash</option>
-
                       </select>
                     </div>
 
-                    <div className="flex justify-between items-center bg-white dark:bg-midnight p-3 rounded-lg border border-slate-200 dark:border-slate-700">
-                      <span>{isAr ? 'فودافون كاش:' : 'Vodafone Cash:'}</span>
-                      <span className="font-mono font-bold text-primary">010xxxxxxx</span>
-                    </div>
-                    <div className="flex justify-between items-center bg-white dark:bg-midnight p-3 rounded-lg border border-slate-200 dark:border-slate-700">
-                      <span>{isAr ? 'إنستاباي (InstaPay):' : 'InstaPay:'}</span>
-                      <span className="font-mono font-bold text-primary">almajdair@instapay</span>
+                    <div className="space-y-3">
+                      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start sm:items-center bg-white dark:bg-midnight p-4 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm gap-2">
+                        <span className="text-slate-600 dark:text-slate-400 font-medium">{isAr ? 'فودافون كاش:' : 'Vodafone Cash:'}</span>
+                        <span className="font-mono font-bold text-lg text-primary bg-primary/5 px-3 py-1 rounded-lg w-fit" dir="ltr">010xxxxxxx</span>
+                      </div>
+                      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start sm:items-center bg-white dark:bg-midnight p-4 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm gap-2">
+                        <span className="text-slate-600 dark:text-slate-400 font-medium">{isAr ? 'إنستاباي (InstaPay):' : 'InstaPay:'}</span>
+                        <span className="font-mono font-bold text-lg text-primary bg-primary/5 px-3 py-1 rounded-lg w-fit" dir="ltr">almajdair@instapay</span>
+                      </div>
                     </div>
                   </div>
 
@@ -564,7 +565,7 @@ export default function SmartPaymentSystem({ isAr, optionTitle, basePrice = 0, r
                     </label>
                   </div>
 
-                  <div className="flex gap-4 mt-6 shrink-0">
+                  <div className="flex gap-4 mt-8 pb-16 sm:pb-0 shrink-0">
                     <button onClick={prevStep} disabled={loading} className="w-1/3 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-full py-4 font-bold text-[1.05rem] flex items-center justify-center hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors shadow-sm">
                       {isAr ? 'رجوع' : 'Back'}
                     </button>
@@ -580,7 +581,7 @@ export default function SmartPaymentSystem({ isAr, optionTitle, basePrice = 0, r
                    </div>
                    <h3 className="text-2xl font-bold text-slate-900 dark:text-white mb-4">{isAr ? 'تأكيد الدفع عند الاستلام' : 'Confirm Cash on Delivery'}</h3>
                    <p className="text-slate-500 mb-8 max-w-sm mx-auto">{isAr ? `سيتم تحصيل مبلغ ${formattedPrice} نقداً بواسطة المهندس المختص عند إتمام الخدمة بنجاح.` : `Amount of ${formattedPrice} will be collected in cash by our engineer upon successful completion.`}</p>
-                   <div className="flex gap-4 w-full mt-auto shrink-0">
+                   <div className="flex gap-4 w-full mt-8 pb-16 sm:pb-0 shrink-0">
                       <button onClick={prevStep} disabled={loading} className="w-1/3 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-full py-4 font-bold text-[1.05rem] flex items-center justify-center hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors shadow-sm">
                         {isAr ? 'رجوع' : 'Back'}
                       </button>

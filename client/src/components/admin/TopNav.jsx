@@ -104,7 +104,7 @@ export default function TopNav({ isAr, lang, setLang, theme, setTheme, setMobile
           </button>
           
           {showNotifications && (
-            <div className={`absolute top-full mt-2 ${isAr ? 'left-0' : 'right-0'} w-80 bg-white dark:bg-midnight border border-slate-100 dark:border-slate-800 shadow-xl rounded-2xl overflow-hidden z-50`}>
+            <div className={`absolute top-full mt-2 ${isAr ? 'left-[-1rem] sm:left-0' : 'right-[-1rem] sm:right-0'} w-[calc(100vw-2rem)] sm:w-80 bg-white dark:bg-midnight border border-slate-100 dark:border-slate-800 shadow-xl rounded-2xl overflow-hidden z-50`}>
               <div className="p-4 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center bg-slate-50/50 dark:bg-slate-800/30">
                 <h3 className="font-bold text-slate-900 dark:text-white">{isAr ? 'الإشعارات' : 'Notifications'}</h3>
                 {pendingRequests.length > 0 && <span className="bg-primary/10 text-primary text-xs font-bold px-2 py-1 rounded-lg">{pendingRequests.length} {isAr ? 'جديد' : 'New'}</span>}
@@ -158,7 +158,7 @@ export default function TopNav({ isAr, lang, setLang, theme, setTheme, setMobile
           </button>
           
           {showProfile && (
-            <div className={`absolute top-full mt-2 ${isAr ? 'left-0' : 'right-0'} w-48 bg-white dark:bg-midnight border border-slate-100 dark:border-slate-800 shadow-xl rounded-2xl overflow-hidden z-50`}>
+            <div className={`absolute top-full mt-2 ${isAr ? 'left-[-1rem] sm:left-0' : 'right-[-1rem] sm:right-0'} w-48 bg-white dark:bg-midnight border border-slate-100 dark:border-slate-800 shadow-xl rounded-2xl overflow-hidden z-50`}>
               <div className="p-2">
                 <button onClick={handleLogout} className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors text-sm font-semibold text-start">
                   <LogOut size={18} />
