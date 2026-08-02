@@ -211,11 +211,11 @@ export default function Navbar({ lang, setLang, theme, setTheme }) {
                     {displayName || 'User'}
                   </Link>
                   {user.role === 'admin' && (
-                    <Link to="/admin" onClick={closeMenu} className="flex items-center justify-center gap-2 w-full py-3 rounded-xl border border-primary text-primary font-bold">
+                    <Link to="/admin" onClick={closeMenu} className="flex items-center justify-center gap-2 w-full py-3 rounded-xl bg-primary/10 dark:bg-primary/20 text-primary dark:text-primary-light font-bold">
                       {lang === 'ar' ? 'لوحة التحكم' : 'Admin Dashboard'}
                     </Link>
                   )}
-                  <button onClick={handleLogout} className="flex items-center justify-center gap-2 w-full py-3 rounded-xl bg-red-50 text-red-500 font-bold">
+                  <button onClick={handleLogout} className="flex items-center justify-center gap-2 w-full py-3 rounded-xl bg-red-50 dark:bg-red-500/10 text-red-500 dark:text-red-400 font-bold">
                     {lang === 'ar' ? 'تسجيل الخروج' : 'Logout'}
                   </button>
                 </>

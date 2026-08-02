@@ -222,7 +222,7 @@ export default function SmartPaymentSystem({ isAr, optionTitle, basePrice = 0, r
   const formattedPrice = new Intl.NumberFormat('en-EG', { style: 'currency', currency: 'EGP' }).format(finalPrice);
 
   return (
-    <div className="bg-white/80 dark:bg-midnight/80 backdrop-blur-xl border border-slate-200/50 dark:border-slate-700/50 shadow-[0_30px_60px_-15px_rgba(0,180,216,0.15)] rounded-[2.5rem] p-5 sm:p-10 relative overflow-hidden h-[500px] sm:h-[600px] flex flex-col">
+    <div className="bg-white/80 dark:bg-midnight/80 backdrop-blur-xl border border-slate-200/50 dark:border-slate-700/50 shadow-[0_30px_60px_-15px_rgba(0,180,216,0.15)] rounded-[2.5rem] p-5 sm:p-10 relative overflow-hidden h-[600px] sm:h-[650px] flex flex-col">
       <div className="absolute -top-32 -right-32 w-64 h-64 bg-primary/20 rounded-full blur-[80px] pointer-events-none"></div>
       {step > 0 && (
         <div className="flex justify-between mb-8 relative z-10">
@@ -346,26 +346,26 @@ export default function SmartPaymentSystem({ isAr, optionTitle, basePrice = 0, r
                 )}
               </div>
               {formError && <div className="text-red-500 text-sm mb-4 font-bold">{formError}</div>}
-              <div className="space-y-4 flex-1">
+              <div className="space-y-5 flex-1">
                 <div>
                   <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">{isAr ? 'رقم الهاتف' : 'Phone Number'}</label>
                   <div className="relative">
-                    <Phone className="absolute top-1/2 -translate-y-1/2 mx-4 text-slate-400" size={20} />
-                    <input type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="01xxxxxxxxx" maxLength="11" className="w-full bg-slate-50 dark:bg-midnight-lighter border border-slate-200 dark:border-slate-700 rounded-xl py-3 px-12 text-slate-900 dark:text-white focus:ring-2 focus:ring-primary outline-none transition-shadow" />
+                    <Phone className={`absolute top-1/2 -translate-y-1/2 ${isAr ? 'right-4' : 'left-4'} text-slate-400`} size={20} />
+                    <input type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="01xxxxxxxxx" maxLength="11" className={`w-full bg-slate-50 dark:bg-midnight-lighter border border-slate-200 dark:border-slate-700 rounded-xl py-3.5 ${isAr ? 'pr-12 pl-4' : 'pl-12 pr-4'} text-slate-900 dark:text-white focus:ring-2 focus:ring-primary outline-none transition-shadow`} />
                   </div>
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">{isAr ? 'التاريخ' : 'Date'}</label>
                   <div className="relative">
-                    <Calendar className="absolute top-1/2 -translate-y-1/2 mx-4 text-slate-400" size={20} />
-                    <input type="date" value={date} onChange={(e) => setDate(e.target.value)} className="w-full bg-slate-50 dark:bg-midnight-lighter border border-slate-200 dark:border-slate-700 rounded-xl py-3 px-12 text-slate-900 dark:text-white focus:ring-2 focus:ring-primary outline-none transition-shadow" />
+                    <Calendar className={`absolute top-1/2 -translate-y-1/2 ${isAr ? 'right-4' : 'left-4'} text-slate-400 pointer-events-none`} size={20} />
+                    <input type="date" value={date} onChange={(e) => setDate(e.target.value)} className={`w-full bg-slate-50 dark:bg-midnight-lighter border border-slate-200 dark:border-slate-700 rounded-xl py-3.5 ${isAr ? 'pr-12 pl-4' : 'pl-12 pr-4'} text-slate-900 dark:text-white focus:ring-2 focus:ring-primary outline-none transition-shadow`} />
                   </div>
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">{isAr ? 'العنوان بالتفصيل' : 'Detailed Address'}</label>
                   <div className="relative">
-                    <MapPin className="absolute top-4 mx-4 text-slate-400" size={20} />
-                    <textarea rows="3" value={address} onChange={(e) => setAddress(e.target.value)} className="w-full bg-slate-50 dark:bg-midnight-lighter border border-slate-200 dark:border-slate-700 rounded-xl py-3 px-12 text-slate-900 dark:text-white focus:ring-2 focus:ring-primary outline-none transition-shadow resize-none placeholder-slate-400" placeholder={isAr ? 'اكتب عنوانك هنا...' : 'Enter your address here...'}></textarea>
+                    <MapPin className={`absolute top-4 ${isAr ? 'right-4' : 'left-4'} text-slate-400`} size={20} />
+                    <textarea rows="3" value={address} onChange={(e) => setAddress(e.target.value)} className={`w-full bg-slate-50 dark:bg-midnight-lighter border border-slate-200 dark:border-slate-700 rounded-xl py-3.5 ${isAr ? 'pr-12 pl-4' : 'pl-12 pr-4'} text-slate-900 dark:text-white focus:ring-2 focus:ring-primary outline-none transition-shadow resize-none placeholder-slate-400`} placeholder={isAr ? 'اكتب عنوانك هنا...' : 'Enter your address here...'}></textarea>
                   </div>
                 </div>
               </div>
