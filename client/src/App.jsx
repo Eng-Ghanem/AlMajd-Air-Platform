@@ -13,9 +13,11 @@ import NotFoundPage from './pages/NotFoundPage'
 import LoginPage from './pages/LoginPage'
 import SignUpPage from './pages/SignUpPage'
 import ForgotPasswordPage from './pages/ForgotPasswordPage'
+import UpdatePasswordPage from './pages/UpdatePasswordPage'
 import PaymentPage from './pages/PaymentPage'
 import ProfilePage from './pages/ProfilePage'
 import AdminDashboard from './pages/AdminDashboard'
+import TechnicianPage from './pages/TechnicianPage'
 import { AuthProvider, useAuth } from './context/AuthContext'
 
 function AppRoutes({ lang, setLang, theme, setTheme }) {
@@ -29,12 +31,13 @@ function AppRoutes({ lang, setLang, theme, setTheme }) {
     } else if (authUser) {
       user = { 
         name: authUser.user_metadata?.name || authUser.email?.split('@')[0] || 'User',
-        role: authUser.email === '41147332a@gmail.com' ? 'admin' : 'customer'
+        role: 'customer' // Default fallback until profile loads
       };
     }
   }
   
   const isAdmin = user?.role === 'admin';
+  const isTechnician = user?.role === 'technician';
 
   return (
     <Routes>
@@ -49,11 +52,13 @@ function AppRoutes({ lang, setLang, theme, setTheme }) {
         <Route path="/login" element={<LoginPage lang={lang} />} />
         <Route path="/signup" element={<SignUpPage lang={lang} />} />
         <Route path="/forgot-password" element={<ForgotPasswordPage lang={lang} />} />
+        <Route path="/update-password" element={<UpdatePasswordPage lang={lang} />} />
         <Route path="/payment" element={<PaymentPage lang={lang} />} />
         <Route path="/profile" element={user ? <ProfilePage lang={lang} /> : <LoginPage lang={lang} />} />
-        <Route path="/admin" element={isAdmin ? <AdminDashboard lang={lang} /> : <Home lang={lang} />} />
+        <Route path="/technician" element={isTechnician || isAdmin ? <TechnicianPage lang={lang} /> : <Home lang={lang} />} />
         <Route path="*" element={<NotFoundPage lang={lang} />} />
       </Route>
+      <Route path="/admin" element={isAdmin ? <AdminDashboard lang={lang} setLang={setLang} theme={theme} setTheme={setTheme} /> : <Home lang={lang} />} />
     </Routes>
   );
 }

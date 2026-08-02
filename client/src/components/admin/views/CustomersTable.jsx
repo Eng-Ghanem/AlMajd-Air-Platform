@@ -41,7 +41,7 @@ export default function CustomersTable({ isAr, users, loading }) {
       </div>
 
       <div className="overflow-x-auto">
-        <table className="w-full text-sm text-left">
+        <table className={`w-full text-sm ${isAr ? 'text-right' : 'text-left'}`}>
           <thead className="bg-slate-50/80 dark:bg-slate-800/50 text-slate-500 dark:text-slate-400 font-semibold border-b border-slate-100 dark:border-slate-800">
             <tr>
               <th className={`px-6 py-4 ${isAr ? 'text-right' : 'text-left'}`}>{isAr ? 'العميل' : 'Customer'}</th>

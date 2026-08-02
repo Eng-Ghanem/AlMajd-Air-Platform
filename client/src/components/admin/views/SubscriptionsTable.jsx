@@ -38,7 +38,7 @@ export default function SubscriptionsTable({ isAr, subscriptions, loading }) {
       </div>
 
       <div className="overflow-x-auto">
-        <table className="w-full text-sm text-left">
+        <table className={`w-full text-sm ${isAr ? 'text-right' : 'text-left'}`}>
           <thead className="bg-slate-50/80 dark:bg-slate-800/50 text-slate-500 dark:text-slate-400 font-semibold border-b border-slate-100 dark:border-slate-800">
             <tr>
               <th className={`px-6 py-4 ${isAr ? 'text-right' : 'text-left'}`}>{isAr ? 'العميل' : 'Customer'}</th>
@@ -60,9 +60,6 @@ export default function SubscriptionsTable({ isAr, subscriptions, loading }) {
                   <div className="flex flex-col items-center justify-center">
                     <Package className="w-12 h-12 text-slate-300 mb-3" />
                     <p>{isAr ? 'لا توجد اشتراكات مسجلة' : 'No subscriptions found'}</p>
-                    <p className="text-xs mt-1 max-w-sm">
-                      {isAr ? 'قم بإنشاء جدول subscriptions في قاعدة البيانات عبر تشغيل الكود المرفق.' : 'Create the subscriptions table in your database using the provided SQL script.'}
-                    </p>
                   </div>
                 </td>
               </tr>

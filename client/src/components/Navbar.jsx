@@ -17,10 +17,13 @@ export default function Navbar({ lang, setLang, theme, setTheme }) {
     } else if (authUser) {
       user = { 
         name: authUser.user_metadata?.name || authUser.email?.split('@')[0] || 'User',
-        role: authUser.email === '41147332a@gmail.com' ? 'admin' : 'customer'
+        role: 'customer' // Default fallback
       };
     }
   }
+
+  // Safe display name logic
+  const displayName = user?.name ? user.name.trim().split(' ')[0] : (user?.email?.split('@')[0] || 'User');
 
   const handleLogout = () => {
     logout(); // Initiates background signout and clears state synchronously
@@ -40,8 +43,10 @@ export default function Navbar({ lang, setLang, theme, setTheme }) {
   };
 
   const navLinkClass = ({ isActive }) => 
-    `relative py-2 text-sm uppercase tracking-wider font-semibold transition-colors duration-300 ${
-      isActive ? 'text-primary dark:text-accent' : 'text-slate-600 dark:text-slate-300 hover:text-primary dark:hover:text-accent'
+    `relative py-2 text-sm uppercase tracking-wider font-bold transition-all duration-300 ${
+      isActive 
+        ? 'text-primary dark:text-accent scale-105' 
+        : 'text-slate-600 dark:text-slate-300 hover:text-primary dark:hover:text-accent hover:-translate-y-0.5'
     } group`;
 
   const mobileNavLinkClass = ({ isActive }) =>
@@ -52,19 +57,19 @@ export default function Navbar({ lang, setLang, theme, setTheme }) {
   return (
     <nav className="sticky top-0 z-50 w-full backdrop-blur-xl bg-white/80 dark:bg-midnight/80 border-b border-slate-200 dark:border-slate-800 shadow-sm transition-colors duration-500">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-20">
+        <div className="flex justify-between items-center h-20 gap-4 lg:gap-8">
           <Link to="/" className="flex-shrink-0 flex items-center gap-3 cursor-pointer group" onClick={closeMenu}>
             <img 
               src="/images/logo.png" 
               alt="AlMajd Air Logo" 
               className="h-10 w-10 object-contain drop-shadow-md group-hover:scale-110 transition-transform duration-500 rounded-lg"
             />
-            <span className="text-3xl font-black tracking-tighter bg-clip-text text-transparent bg-gradient-to-r from-primary to-accent group-hover:from-accent group-hover:to-primary transition-all duration-500">
+            <span className="text-2xl xl:text-3xl font-black tracking-tighter bg-clip-text text-transparent bg-gradient-to-r from-primary to-accent group-hover:from-accent group-hover:to-primary transition-all duration-500 whitespace-nowrap">
               {lang === 'ar' ? 'المجد اير' : 'AlMajd Air'}
             </span>
           </Link>
 
-          <div className="hidden lg:flex items-center gap-8 xl:gap-10">
+          <div className="hidden lg:flex items-center gap-4 xl:gap-8">
             <NavLink to="/" className={navLinkClass}>
               {lang === 'ar' ? 'الرئيسية' : 'Home'}
               <span className="absolute inset-x-0 bottom-0 h-0.5 bg-gradient-to-r from-primary to-accent transform scale-x-0 group-hover:scale-x-100 transition-transform origin-left duration-300"></span>
@@ -81,6 +86,12 @@ export default function Navbar({ lang, setLang, theme, setTheme }) {
               {lang === 'ar' ? 'من نحن' : 'About Us'}
               <span className="absolute inset-x-0 bottom-0 h-0.5 bg-gradient-to-r from-primary to-accent transform scale-x-0 group-hover:scale-x-100 transition-transform origin-left duration-300"></span>
             </NavLink>
+            {(user?.role === 'technician' || user?.role === 'admin') && (
+              <NavLink to="/technician" className={navLinkClass}>
+                {lang === 'ar' ? 'بوابة الفنيين' : 'Technicians'}
+                <span className="absolute inset-x-0 bottom-0 h-0.5 bg-gradient-to-r from-primary to-accent transform scale-x-0 group-hover:scale-x-100 transition-transform origin-left duration-300"></span>
+              </NavLink>
+            )}
             <NavLink to="/testimonials" className={navLinkClass}>
               {lang === 'ar' ? 'آراء العملاء' : 'Testimonials'}
               <span className="absolute inset-x-0 bottom-0 h-0.5 bg-gradient-to-r from-primary to-accent transform scale-x-0 group-hover:scale-x-100 transition-transform origin-left duration-300"></span>
@@ -88,10 +99,10 @@ export default function Navbar({ lang, setLang, theme, setTheme }) {
           </div>
 
           {/* Desktop Menu & Toggles */}
-          <div className="hidden lg:flex items-center gap-4">
+          <div className="hidden lg:flex items-center gap-2 xl:gap-4">
             <button
               onClick={toggleLang}
-              className="flex items-center gap-2 px-4 py-2 rounded-full border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all font-semibold text-sm text-slate-700 dark:text-slate-200 shadow-sm"
+              className="flex items-center gap-1.5 xl:gap-2 px-3 py-2 xl:px-4 rounded-full border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all font-semibold text-sm text-slate-700 dark:text-slate-200 shadow-sm"
               aria-label="Toggle Language"
             >
               <Globe size={18} className="text-primary dark:text-accent" />
@@ -109,10 +120,10 @@ export default function Navbar({ lang, setLang, theme, setTheme }) {
             <div className="h-6 w-px bg-slate-300 dark:bg-slate-700 mx-1"></div>
 
             {user ? (
-              <div className="flex items-center gap-4 ml-2">
-                <Link to="/profile" className="flex items-center gap-2 text-sm font-bold text-slate-700 dark:text-slate-200 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 px-4 py-2 rounded-full transition-colors">
-                  <User size={18} className="text-primary" />
-                  <span>{user.name.split(' ')[0]}</span>
+              <div className="flex items-center gap-2 xl:gap-4 ml-1 xl:ml-2">
+                <Link to="/profile" className="flex items-center gap-1.5 xl:gap-2 text-sm font-bold text-slate-700 dark:text-slate-200 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 px-3 py-1.5 xl:px-4 xl:py-2 rounded-full transition-colors truncate max-w-[120px] xl:max-w-none">
+                  <User size={18} className="text-primary shrink-0" />
+                  <span className="truncate">{displayName || 'User'}</span>
                 </Link>
                 {user.role === 'admin' && (
                   <Link to="/admin" className="text-sm font-bold text-primary hover:text-accent transition-colors">
@@ -129,9 +140,9 @@ export default function Navbar({ lang, setLang, theme, setTheme }) {
                   <LogIn size={18} />
                   {lang === 'ar' ? 'دخول' : 'Login'}
                 </Link>
-                <Link to="/signup" className="flex items-center gap-2 px-5 py-2.5 rounded-full bg-gradient-to-r from-primary to-accent text-white text-sm font-bold hover:scale-105 transition-all shadow-md">
-                  <User size={18} />
-                  {lang === 'ar' ? 'حساب جديد' : 'Sign Up'}
+                <Link to="/signup" className="flex items-center gap-1.5 xl:gap-2 px-4 py-2 xl:px-5 xl:py-2.5 rounded-full bg-gradient-to-r from-primary to-accent text-white text-sm font-bold hover:scale-105 transition-all shadow-md">
+                  <User size={18} className="shrink-0" />
+                  <span className="whitespace-nowrap">{lang === 'ar' ? 'حساب جديد' : 'Sign Up'}</span>
                 </Link>
               </>
             )}
@@ -174,9 +185,18 @@ export default function Navbar({ lang, setLang, theme, setTheme }) {
             <NavLink to="/services" className={mobileNavLinkClass} onClick={closeMenu}>
               {lang === 'ar' ? 'خدماتنا' : 'Services'}
             </NavLink>
-            <NavLink to="/about" className={mobileNavLinkClass} onClick={closeMenu}>
-              {lang === 'ar' ? 'من نحن' : 'About Us'}
+            <NavLink to="/about" onClick={closeMenu} className={mobileNavLinkClass}>
+              <div className="flex items-center gap-3">
+                {lang === 'ar' ? 'من نحن' : 'About Us'}
+              </div>
             </NavLink>
+            {(user?.role === 'technician' || user?.role === 'admin') && (
+              <NavLink to="/technician" onClick={closeMenu} className={mobileNavLinkClass}>
+                <div className="flex items-center gap-3">
+                  {lang === 'ar' ? 'بوابة الفنيين' : 'Technicians'}
+                </div>
+              </NavLink>
+            )}
             <NavLink to="/testimonials" className={mobileNavLinkClass} onClick={closeMenu}>
               {lang === 'ar' ? 'آراء العملاء' : 'Testimonials'}
             </NavLink>
@@ -188,7 +208,7 @@ export default function Navbar({ lang, setLang, theme, setTheme }) {
                 <>
                   <Link to="/profile" onClick={closeMenu} className="flex items-center justify-center gap-2 w-full py-3 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-bold transition-colors">
                     <User size={20} className="text-primary" />
-                    {user.name}
+                    {displayName || 'User'}
                   </Link>
                   {user.role === 'admin' && (
                     <Link to="/admin" onClick={closeMenu} className="flex items-center justify-center gap-2 w-full py-3 rounded-xl border border-primary text-primary font-bold">

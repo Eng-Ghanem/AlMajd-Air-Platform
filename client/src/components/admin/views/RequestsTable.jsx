@@ -1,13 +1,23 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Search, Filter, MoreVertical, CheckCircle2, XCircle, Clock, X, MessageSquare, Phone, User, Calendar, Trash2 } from 'lucide-react';
 
-export default function RequestsTable({ isAr, requests, loading, fetchRequests }) {
+export default function RequestsTable({ isAr, requests, loading, fetchRequests, openRequestId, setOpenRequestId }) {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [selectedRequest, setSelectedRequest] = useState(null);
   const [deleteConfirmId, setDeleteConfirmId] = useState(null);
   const [isDeleting, setIsDeleting] = useState(false);
+
+  useEffect(() => {
+    if (openRequestId && requests.length > 0) {
+      const req = requests.find(r => r.id === openRequestId);
+      if (req) {
+        setSelectedRequest(req);
+      }
+      if (setOpenRequestId) setOpenRequestId(null);
+    }
+  }, [openRequestId, requests, setOpenRequestId]);
 
   const filteredRequests = requests.filter(req => {
     const matchesSearch = req.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
@@ -17,16 +27,16 @@ export default function RequestsTable({ isAr, requests, loading, fetchRequests }
     return matchesSearch && matchesStatus;
   });
 
-  const handleMarkAsCompleted = async (id) => {
+  const handleUpdateStatus = async (id, newStatus) => {
     try {
-      const response = await fetch(`http://localhost:5000/api/requests/${id}/status`, {
+      const response = await fetch(`http://${window.location.hostname}:5000/api/requests/${id}/status`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: 'completed' })
+        body: JSON.stringify({ status: newStatus })
       });
       if (response.ok) {
         if (fetchRequests) fetchRequests();
-        setSelectedRequest(prev => ({ ...prev, status: 'completed' }));
+        setSelectedRequest(prev => ({ ...prev, status: newStatus }));
       } else {
         alert(isAr ? 'حدث خطأ أثناء تحديث الحالة، يرجى التأكد من اتصال الإنترنت' : 'Error updating status, please check connection');
       }
@@ -102,7 +112,6 @@ export default function RequestsTable({ isAr, requests, loading, fetchRequests }
                 <option value="all">{isAr ? 'كل الحالات' : 'All Statuses'}</option>
                 <option value="pending">{isAr ? 'قيد الانتظار' : 'Pending'}</option>
                 <option value="paid">{isAr ? 'مدفوع' : 'Paid'}</option>
-                <option value="completed">{isAr ? 'مكتمل' : 'Completed'}</option>
                 <option value="cancelled">{isAr ? 'ملغي' : 'Cancelled'}</option>
               </select>
             </div>
@@ -111,7 +120,7 @@ export default function RequestsTable({ isAr, requests, loading, fetchRequests }
 
         {/* Table */}
         <div className="overflow-x-auto">
-          <table className="w-full text-sm text-left">
+          <table className={`w-full text-sm ${isAr ? 'text-right' : 'text-left'}`}>
             <thead className="bg-slate-50/80 dark:bg-slate-800/50 text-slate-500 dark:text-slate-400 font-semibold border-b border-slate-100 dark:border-slate-800">
               <tr>
                 <th className="px-6 py-4 text-start whitespace-nowrap">{isAr ? 'كود الطلب' : 'Request ID'}</th>
@@ -356,22 +365,25 @@ export default function RequestsTable({ isAr, requests, loading, fetchRequests }
                 </div>
 
                 {/* Modal Footer */}
-                <div className="bg-slate-50 dark:bg-slate-800/50 p-6 border-t border-slate-100 dark:border-slate-800 flex justify-end gap-3 shrink-0">
+                <div className="bg-slate-50 dark:bg-slate-800/50 p-6 border-t border-slate-100 dark:border-slate-800 flex justify-between items-center shrink-0">
+                  <div className="flex items-center gap-3">
+                    <span className="text-sm font-bold text-slate-500 dark:text-slate-400">{isAr ? 'تغيير الحالة:' : 'Change Status:'}</span>
+                    <select
+                      value={selectedRequest.status}
+                      onChange={(e) => handleUpdateStatus(selectedRequest.id, e.target.value)}
+                      className="bg-white dark:bg-midnight border border-slate-200 dark:border-slate-700 rounded-lg px-4 py-2 text-sm font-bold text-slate-700 dark:text-slate-300 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary appearance-none cursor-pointer"
+                    >
+                      <option value="pending">{isAr ? 'قيد الانتظار' : 'Pending'}</option>
+                      <option value="paid">{isAr ? 'مدفوع' : 'Paid'}</option>
+                      <option value="cancelled">{isAr ? 'ملغي' : 'Cancelled'}</option>
+                    </select>
+                  </div>
                   <button
                     onClick={() => setSelectedRequest(null)}
                     className="px-6 py-2.5 rounded-xl font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
                   >
                     {isAr ? 'إغلاق' : 'Close'}
                   </button>
-                  {selectedRequest.status === 'pending' && (
-                    <button 
-                      onClick={() => handleMarkAsCompleted(selectedRequest.id)}
-                      className="px-6 py-2.5 rounded-xl font-bold bg-green-500 hover:bg-green-600 text-white transition-colors flex items-center gap-2 shadow-lg shadow-green-500/30"
-                    >
-                      <CheckCircle2 size={20} />
-                      {isAr ? 'تحديد كمكتمل' : 'Mark as Completed'}
-                    </button>
-                  )}
                 </div>
               </motion.div>
             </motion.div>

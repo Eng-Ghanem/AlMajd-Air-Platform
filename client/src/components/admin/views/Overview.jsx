@@ -1,48 +1,60 @@
 import React from 'react';
 import { Users, Calendar, DollarSign, TrendingUp, Package } from 'lucide-react';
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Brush } from 'recharts';
 import { motion } from 'framer-motion';
 
 export default function Overview({ isAr, requests, users, payments, subscriptions }) {
   // Aggregate real stats
-  const totalRevenue = payments.filter(p => p.status === 'completed').reduce((acc, p) => acc + (p.amount || 0), 0);
+  const standalonePaymentsRevenue = payments
+    .filter(p => p.status === 'completed' && !p.request_id)
+    .reduce((acc, p) => acc + (Number(p.amount) || 0), 0);
+  const requestsRevenue = requests
+    .filter(req => req.status === 'paid')
+    .reduce((acc, req) => acc + (Number(req.total_price) || 0), 0);
+  const totalRevenue = standalonePaymentsRevenue + requestsRevenue;
+
   const totalCustomers = users.filter(u => u.role === 'customer' || !u.role).length;
   const pendingRequests = requests.filter(req => req.status === 'pending').length;
   const totalSubscriptions = subscriptions.length;
 
   // Generate chart data based on payments
-  // Initialize last 7 months
+  // Initialize last 90 days for detailed zooming
   const chartData = [];
-  const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
   const today = new Date();
   
-  for (let i = 6; i >= 0; i--) {
-    const d = new Date(today.getFullYear(), today.getMonth() - i, 1);
+  for (let i = 90; i >= 0; i--) {
+    const d = new Date(today.getFullYear(), today.getMonth(), today.getDate() - i);
+    const dateStr = d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short' });
     chartData.push({
-      monthIndex: d.getMonth(),
-      year: d.getFullYear(),
-      name: monthNames[d.getMonth()],
+      dateStr: dateStr,
+      fullDate: d,
+      name: dateStr, // for XAxis
       revenue: 0,
       requests: 0
     });
   }
 
-  // Populate chart data from payments
+  // Populate chart data from payments (standalone)
   payments.forEach(payment => {
-    if (payment.status !== 'completed') return;
+    if (payment.status !== 'completed' || payment.request_id) return;
     const pDate = new Date(payment.created_at);
-    const dataPoint = chartData.find(d => d.monthIndex === pDate.getMonth() && d.year === pDate.getFullYear());
+    const dateStr = pDate.toLocaleDateString('en-GB', { day: '2-digit', month: 'short' });
+    const dataPoint = chartData.find(d => d.dateStr === dateStr && d.fullDate.getFullYear() === pDate.getFullYear());
     if (dataPoint) {
-      dataPoint.revenue += (payment.amount || 0);
+      dataPoint.revenue += (Number(payment.amount) || 0);
     }
   });
 
-  // Populate requests count in chart data
+  // Populate requests count and revenue in chart data
   requests.forEach(req => {
     const rDate = new Date(req.created_at);
-    const dataPoint = chartData.find(d => d.monthIndex === rDate.getMonth() && d.year === rDate.getFullYear());
+    const dateStr = rDate.toLocaleDateString('en-GB', { day: '2-digit', month: 'short' });
+    const dataPoint = chartData.find(d => d.dateStr === dateStr && d.fullDate.getFullYear() === rDate.getFullYear());
     if (dataPoint) {
       dataPoint.requests += 1;
+      if (req.status === 'paid') {
+        dataPoint.revenue += (Number(req.total_price) || 0);
+      }
     }
   });
 
@@ -97,7 +109,7 @@ export default function Overview({ isAr, requests, users, payments, subscription
           <div className="flex items-center justify-between mb-8">
             <div>
               <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-1">{isAr ? 'نظرة عامة على الإيرادات' : 'Revenue Overview'}</h3>
-              <p className="text-sm text-slate-500">{isAr ? 'إحصائيات الإيرادات خلال الأشهر السبعة الماضية' : 'Revenue statistics over the last 7 months'}</p>
+              <p className="text-sm text-slate-500">{isAr ? 'إحصائيات الإيرادات مفصلة يومياً (يمكنك التكبير عبر الشريط بالأسفل)' : 'Detailed daily revenue statistics (Use bottom slider to zoom)'}</p>
             </div>
             <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-bold ${isPositive ? 'text-green-500 bg-green-500/10' : 'text-red-500 bg-red-500/10'}`}>
               <TrendingUp size={16} className={isPositive ? '' : 'rotate-180'} />
@@ -121,6 +133,7 @@ export default function Overview({ isAr, requests, users, payments, subscription
                   itemStyle={{ color: '#00B4D8' }}
                 />
                 <Area type="monotone" dataKey="revenue" stroke="#00B4D8" strokeWidth={3} fillOpacity={1} fill="url(#colorRevenue)" />
+                <Brush dataKey="name" height={30} stroke="#00B4D8" fill="#1e293b" tickFormatter={() => ''} />
               </AreaChart>
             </ResponsiveContainer>
           </div>
@@ -129,23 +142,33 @@ export default function Overview({ isAr, requests, users, payments, subscription
         {/* Recent Activity Widget */}
         <div className="bg-white dark:bg-midnight-lighter p-6 sm:p-8 rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-none border border-slate-100 dark:border-slate-800">
           <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-6">{isAr ? 'النشاطات الأخيرة' : 'Recent Activity'}</h3>
-          <div className="space-y-6 relative before:absolute before:inset-0 before:ml-5 before:-translate-x-px md:before:mx-auto md:before:translate-x-0 before:h-full before:w-0.5 before:bg-gradient-to-b before:from-transparent before:via-slate-200 dark:before:via-slate-700 before:to-transparent">
-            {requests.slice(0, 4).map((req, i) => (
-              <div key={i} className="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group is-active">
-                <div className={`flex items-center justify-center w-10 h-10 rounded-full border-4 border-white dark:border-midnight-lighter bg-primary text-white shadow shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2 z-10 ${isAr ? 'ml-4 md:ml-0' : 'mr-4 md:mr-0'}`}>
-                  <Calendar size={16} />
-                </div>
-                <div className="w-[calc(100%-4rem)] md:w-[calc(50%-2.5rem)] bg-slate-50 dark:bg-slate-800/50 p-4 rounded-xl border border-slate-100 dark:border-slate-700">
-                  <div className="flex items-center justify-between mb-1">
-                    <h4 className="font-bold text-slate-900 dark:text-white text-sm">{req.name}</h4>
-                    <span className="text-xs text-slate-400">#{req.id}</span>
+          <div className="space-y-6 relative before:absolute before:top-0 before:bottom-0 before:w-0.5 before:bg-gradient-to-b before:from-transparent before:via-slate-200 dark:before:via-slate-700 before:to-transparent before:z-0">
+            {/* Dynamic style for the before pseudo-element based on language */}
+            <style>
+              {`
+                .recent-activity-timeline::before {
+                  ${isAr ? 'right: 19px;' : 'left: 19px;'}
+                }
+              `}
+            </style>
+            <div className="recent-activity-timeline contents">
+              {requests.slice(0, 4).map((req, i) => (
+                <div key={i} className="relative flex items-center group z-10">
+                  <div className={`flex items-center justify-center w-10 h-10 rounded-full border-4 border-white dark:border-midnight-lighter bg-primary text-white shadow shrink-0 ${isAr ? 'ml-4' : 'mr-4'}`}>
+                    <Calendar size={16} />
                   </div>
-                  <p className="text-sm text-slate-500">{req.service_type}</p>
+                  <div className="flex-1 min-w-0 bg-slate-50 dark:bg-slate-800/50 p-4 rounded-xl border border-slate-100 dark:border-slate-700 hover:border-primary/30 transition-colors">
+                    <div className="flex items-center justify-between gap-3 mb-1">
+                      <h4 className="font-bold text-slate-900 dark:text-white text-sm truncate" title={req.name}>{req.name}</h4>
+                      <span className="text-xs text-slate-400 font-mono shrink-0 bg-slate-200/50 dark:bg-slate-700/50 px-2 py-0.5 rounded-full">#{req.id}</span>
+                    </div>
+                    <p className="text-sm text-slate-500 truncate">{req.service_type}</p>
+                  </div>
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
             {requests.length === 0 && (
-              <p className="text-slate-500 text-center py-4">{isAr ? 'لا توجد نشاطات' : 'No activities found'}</p>
+              <p className="text-slate-500 text-center py-4 relative z-10">{isAr ? 'لا توجد نشاطات' : 'No activities found'}</p>
             )}
           </div>
         </div>

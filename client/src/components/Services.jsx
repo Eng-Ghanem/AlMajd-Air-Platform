@@ -1,13 +1,16 @@
 import React from 'react';
 import { motion } from 'framer-motion';
+import { Link } from 'react-router-dom';
 import { Wrench, Wind, Snowflake, Droplets } from 'lucide-react';
+
+const MotionLink = motion(Link);
 
 export default function Services({ lang }) {
   const isAr = lang === 'ar';
 
   const services = [
     {
-      id: 1,
+      id: 11,
       title: isAr ? 'التأسيس والتركيب' : 'Installation & Setup',
       description: isAr 
         ? 'نقوم بتأسيس مسارات النحاس وتركيب جميع أنواع المكيفات باحترافية عالية لضمان أفضل أداء.' 
@@ -15,7 +18,7 @@ export default function Services({ lang }) {
       icon: <Wrench size={40} className="text-accent group-hover:text-primary transition-colors duration-500" />
     },
     {
-      id: 2,
+      id: 12,
       title: isAr ? 'الصيانة الدورية' : 'Regular Maintenance',
       description: isAr
         ? 'فحص شامل للمكيفات وإصلاح الأعطال قبل تفاقمها لضمان هواء نقي وكفاءة تبريد مستمرة.'
@@ -23,7 +26,7 @@ export default function Services({ lang }) {
       icon: <Wind size={40} className="text-accent group-hover:text-primary transition-colors duration-500" />
     },
     {
-      id: 3,
+      id: 13,
       title: isAr ? 'شحن الفريون' : 'Freon Charging',
       description: isAr
         ? 'نقدم خدمة شحن فريون عالي الجودة مع فحص التسريبات لضمان تبريد ممتاز وتقليل استهلاك الكهرباء.'
@@ -31,7 +34,7 @@ export default function Services({ lang }) {
       icon: <Snowflake size={40} className="text-accent group-hover:text-primary transition-colors duration-500" />
     },
     {
-      id: 4,
+      id: 14,
       title: isAr ? 'تنظيف وغسيل الوحدات' : 'Units Cleaning & Washing',
       description: isAr
         ? 'غسيل احترافي للوحدات الداخلية والخارجية بالمعدات المتطورة لإزالة الأتربة والبكتيريا.'
@@ -94,7 +97,8 @@ export default function Services({ lang }) {
           className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8"
         >
           {services.map((service) => (
-            <motion.div
+            <MotionLink
+              to={`/service-options/${service.id}`}
               key={service.id}
               variants={cardVariants}
               whileHover={{ scale: 1.05 }}
@@ -117,7 +121,7 @@ export default function Services({ lang }) {
               <p className="text-slate-600 dark:text-slate-400 leading-relaxed font-light">
                 {service.description}
               </p>
-            </motion.div>
+            </MotionLink>
           ))}
         </motion.div>
       </div>

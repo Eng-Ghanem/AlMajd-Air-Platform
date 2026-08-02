@@ -12,31 +12,37 @@ const supabase = require('../database');
 app.use(cors());
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
-// API: Auth Signup
-app.post('/api/auth/signup', async (req, res) => {
+// API: Sync User to public.users
+app.post('/api/auth/sync-user', async (req, res) => {
   if (!supabase) return res.status(500).json({ error: 'Supabase client not initialized' });
   try {
-    const { email, password } = req.body;
-    const { data, error } = await supabase.auth.signUp({ email, password });
-    if (error) throw error;
-    res.status(200).json({ message: 'OTP sent to email', data });
-  } catch (error) {
-    console.error('Signup error:', error);
-    let errorMsg = 'Unknown error during signup';
-    if (error?.message) {
-      errorMsg = error.message;
-    } else if (error?.error_description) {
-      errorMsg = error.error_description;
-    } else if (typeof error === 'string') {
-      errorMsg = error;
-    } else {
-      try {
-        errorMsg = JSON.stringify(error);
-      } catch (e) {
-        errorMsg = String(error);
-      }
+    const { id, email, name, phone, role } = req.body;
+    
+    if (!id || !email) {
+      return res.status(400).json({ error: 'Missing id or email' });
     }
-    res.status(400).json({ error: errorMsg });
+    
+    let { error: dbError } = await supabase.from('users').upsert([
+      { id, name, email, phone, role }
+    ], { onConflict: 'id' });
+    
+    // If it fails because of unique email (meaning the user was deleted from Auth but not public.users)
+    if (dbError && dbError.code === '23505' && dbError.message.includes('email')) {
+      const { error: updateError } = await supabase
+        .from('users')
+        .update({ id, name, phone, role })
+        .eq('email', email);
+      
+      if (updateError) throw updateError;
+      dbError = null;
+    }
+
+    if (dbError) throw dbError;
+    
+    res.status(200).json({ message: 'User synced successfully' });
+  } catch (error) {
+    console.error('Sync user error:', error);
+    res.status(400).json({ error: error.message || 'Unknown error' });
   }
 });
 
@@ -49,7 +55,7 @@ app.post('/api/auth/verify-otp', async (req, res) => {
     if (error) throw error;
     
     // Assign role
-    const role = email === '41147332a@gmail.com' ? 'admin' : 'customer';
+    let role = 'customer'; // Default role is always customer for public signups
     
     // Create public user profile
     const { error: dbError } = await supabase.from('users').upsert([
@@ -62,6 +68,46 @@ app.post('/api/auth/verify-otp', async (req, res) => {
     console.error('Verify OTP error:', error);
     const errorMsg = error.message || (typeof error === 'object' ? JSON.stringify(error) : String(error));
     res.status(400).json({ error: errorMsg || 'Unknown error during OTP verification' });
+  }
+});
+
+// API: Admin Create Technician
+app.post('/api/admin/technicians', async (req, res) => {
+  if (!supabase) return res.status(500).json({ error: 'Supabase client not initialized' });
+  try {
+    const { name, email, phone, password } = req.body;
+    
+    // 1. Create auth user with auto-confirm
+    const { data: authData, error: authError } = await supabase.auth.admin.createUser({
+      email,
+      password,
+      email_confirm: true,
+      user_metadata: { name, phone }
+    });
+
+    if (authError) {
+      if (authError.message.toLowerCase().includes('already registered') || authError.status === 422) {
+        throw new Error('هذا البريد الإلكتروني مسجل مسبقاً في النظام.');
+      }
+      throw authError;
+    }
+
+    // 2. Insert into public.users table as technician
+    const { error: dbError } = await supabase.from('users').upsert([
+      { id: authData.user.id, name, email, phone, role: 'technician' }
+    ]);
+    
+    if (dbError) {
+      if (dbError.code === '23505' || dbError.message.includes('unique constraint')) {
+        throw new Error('هذا البريد الإلكتروني مسجل مسبقاً في النظام.');
+      }
+      throw dbError;
+    }
+
+    res.status(201).json({ message: 'Technician created successfully', user: { id: authData.user.id, name, email, role: 'technician' } });
+  } catch (error) {
+    console.error('Create technician error:', error);
+    res.status(400).json({ error: error.message || 'Unknown error' });
   }
 });
 
@@ -135,20 +181,59 @@ app.get('/', (req, res) => {
 app.post('/api/requests', async (req, res) => {
   if (!supabase) return res.status(500).json({ error: 'Supabase client not initialized' });
   try {
-    const { name, phone, serviceType, message, totalPrice } = req.body;
+    const { name, phone, email, address, serviceType, message, totalPrice, paymentMethod } = req.body;
     if (!name || !phone || !serviceType) {
       return res.status(400).json({ error: 'Missing required fields' });
     }
     
+    const payload = { 
+      name, 
+      phone, 
+      service_type: serviceType, 
+      message, 
+      total_price: Math.round(Number(totalPrice) || 0) 
+    };
+    if (email) payload.email = email;
+    if (address) payload.address = address;
+    
     const { data, error } = await supabase
       .from('service_requests')
-      .insert([
-        { name, phone, service_type: serviceType, message, total_price: totalPrice || 0 }
-      ])
+      .insert([payload])
       .select()
       .single();
       
     if (error) throw error;
+    
+    // Auto-record payment if provided
+    if (paymentMethod) {
+      const paymentPayload = { 
+        request_id: data.id, 
+        amount: Math.round(Number(totalPrice) || 0), 
+        status: 'completed'
+      };
+      
+      let { error: paymentError } = await supabase
+        .from('payments')
+        .insert([{ ...paymentPayload, method: paymentMethod }]);
+        
+      if (paymentError && paymentError.message.includes('method')) {
+        // Fallback for when the 'method' column is missing in the database
+        const { error: fallbackError } = await supabase
+          .from('payments')
+          .insert([paymentPayload]);
+        paymentError = fallbackError;
+      }
+        
+      if (paymentError) {
+        console.error('Failed to record payment automatically:', paymentError.message);
+      } else {
+        // Also update request status to paid
+        await supabase
+          .from('service_requests')
+          .update({ status: 'paid' })
+          .eq('id', data.id);
+      }
+    }
     
     res.status(201).json({ id: data.id, message: 'Request created successfully' });
   } catch (error) {
@@ -158,6 +243,44 @@ app.post('/api/requests', async (req, res) => {
 });
 
 // API: Get All Service Requests (Admin)
+app.post('/api/admin/requests', async (req, res) => {
+  if (!supabase) return res.status(500).json({ error: 'Supabase client not initialized' });
+  try {
+    const { name, phone, email, address, serviceType, message, totalPrice, status, date } = req.body;
+    if (!name || !phone || !serviceType) {
+      return res.status(400).json({ error: 'Missing required fields' });
+    }
+    
+    const payload = { 
+      name, 
+      phone, 
+      service_type: serviceType, 
+      message, 
+      total_price: totalPrice || 0,
+      status: status || 'paid'
+    };
+    if (email) payload.email = email;
+    if (address) payload.address = address;
+    
+    if (date) {
+      payload.created_at = new Date(date).toISOString();
+    }
+    
+    const { data, error } = await supabase
+      .from('service_requests')
+      .insert([payload])
+      .select()
+      .single();
+      
+    if (error) throw error;
+    
+    res.status(201).json({ id: data.id, message: 'Admin Request created successfully' });
+  } catch (error) {
+    console.error('Insert admin request error:', error.message);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 app.get('/api/requests', async (req, res) => {
   if (!supabase) return res.status(500).json({ error: 'Supabase client not initialized' });
   try {

@@ -51,7 +51,7 @@ export default function Home({ lang }) {
               className="mt-8 text-2xl sm:text-3xl text-slate-700 dark:text-slate-200 max-w-4xl mx-auto leading-relaxed font-medium drop-shadow-md"
             >
               {isAr 
-                ? 'منصتك الاحترافية الشاملة لجميع خدمات التكييف. جودة عالية وأداء لا يضاهى يضاهي المعايير العالمية.' 
+                ? 'منصتك الاحترافية الشاملة لجميع خدمات التكييف. جودة عالية وأداء لا يضاهى يطابق المعايير العالمية.' 
                 : 'Your professional and comprehensive platform for all AC services. High quality and unmatched performance meeting global standards.'}
             </motion.p>
             

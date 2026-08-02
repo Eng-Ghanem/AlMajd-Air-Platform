@@ -24,9 +24,19 @@ const defaultDevicesInfo = [
   { id: 'haier_3', nameAr: 'تكييف هاير 3 حصان', nameEn: 'Haier 3 HP', brand: 'Haier' },
   { id: 'haier_4', nameAr: 'تكييف هاير 4 حصان', nameEn: 'Haier 4 HP', brand: 'Haier' },
   { id: 'haier_5', nameAr: 'تكييف هاير 5 حصان', nameEn: 'Haier 5 HP', brand: 'Haier' },
+  // Maintenance Services
+  { id: 'service_maintenance', nameAr: 'صيانة دورية', nameEn: 'Periodic Maintenance', brand: 'Services' },
+  { id: 'service_installation', nameAr: 'تأسيس وتركيب عام', nameEn: 'General Installation', brand: 'Services' },
+  { id: 'service_cleaning', nameAr: 'تنظيف وغسيل', nameEn: 'Cleaning', brand: 'Services' },
+  { id: 'service_freon', nameAr: 'شحن فريون', nameEn: 'Freon Recharge', brand: 'Services' },
+  { id: 'service_install_carrier', nameAr: 'تركيب تكييف كاريير', nameEn: 'Carrier Installation', brand: 'Services' },
+  { id: 'service_install_midea', nameAr: 'تركيب تكييف ميديا', nameEn: 'Midea Installation', brand: 'Services' },
+  { id: 'service_install_free_air', nameAr: 'تركيب تكييف فري اير', nameEn: 'Free Air Installation', brand: 'Services' },
+  { id: 'service_install_haier', nameAr: 'تركيب تكييف هاير', nameEn: 'Haier Installation', brand: 'Services' },
 ];
 
 export default function PricesManager({ isAr }) {
+  const [activeTab, setActiveTab] = useState('devices');
   const [searchTerm, setSearchTerm] = useState('');
   const [pricesData, setPricesData] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -40,7 +50,7 @@ export default function PricesManager({ isAr }) {
   const fetchPrices = async () => {
     try {
       setLoading(true);
-      const res = await fetch('http://localhost:5000/api/device-prices');
+      const res = await fetch(`http://${window.location.hostname}:5000/api/device-prices`);
       const dbPrices = await res.json();
       
       // Merge dbPrices with defaultDevicesInfo
@@ -78,7 +88,7 @@ export default function PricesManager({ isAr }) {
         id, price, discount_percentage
       }));
       
-      const res = await fetch('http://localhost:5000/api/device-prices', {
+      const res = await fetch(`http://${window.location.hostname}:5000/api/device-prices`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ prices: pricesToSave })
@@ -95,11 +105,21 @@ export default function PricesManager({ isAr }) {
     }
   };
 
-  const filteredData = pricesData.filter(d => 
-    (d.nameAr.includes(searchTerm)) || 
-    (d.nameEn.toLowerCase().includes(searchTerm.toLowerCase())) ||
-    (d.brand.toLowerCase().includes(searchTerm.toLowerCase()))
-  );
+  const filteredData = pricesData.filter(d => {
+    let matchesTab = false;
+    if (activeTab === 'devices') {
+      matchesTab = !d.id.startsWith('service_');
+    } else if (activeTab === 'services') {
+      matchesTab = d.id.startsWith('service_') && !d.id.startsWith('service_install_');
+    } else if (activeTab === 'installations') {
+      matchesTab = d.id.startsWith('service_install_');
+    }
+    
+    const matchesSearch = (d.nameAr.includes(searchTerm)) || 
+                          (d.nameEn.toLowerCase().includes(searchTerm.toLowerCase())) ||
+                          (d.brand.toLowerCase().includes(searchTerm.toLowerCase()));
+    return matchesTab && matchesSearch;
+  });
 
   return (
     <motion.div 
@@ -142,6 +162,39 @@ export default function PricesManager({ isAr }) {
             {saveSuccess ? (isAr ? 'تم الحفظ' : 'Saved') : (isAr ? 'حفظ التغييرات' : 'Save Changes')}
           </button>
         </div>
+      </div>
+
+      <div className="flex border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/30">
+        <button
+          onClick={() => setActiveTab('devices')}
+          className={`flex-1 py-4 font-bold text-center border-b-2 transition-colors ${
+            activeTab === 'devices' 
+              ? 'border-primary text-primary bg-white dark:bg-midnight' 
+              : 'border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
+          }`}
+        >
+          {isAr ? 'التكييفات والماركات' : 'Air Conditioners & Brands'}
+        </button>
+        <button
+          onClick={() => setActiveTab('services')}
+          className={`flex-1 py-4 font-bold text-center border-b-2 transition-colors ${
+            activeTab === 'services' 
+              ? 'border-primary text-primary bg-white dark:bg-midnight' 
+              : 'border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
+          }`}
+        >
+          {isAr ? 'الصيانة والخدمات' : 'Maintenance & Services'}
+        </button>
+        <button
+          onClick={() => setActiveTab('installations')}
+          className={`flex-1 py-4 font-bold text-center border-b-2 transition-colors ${
+            activeTab === 'installations' 
+              ? 'border-primary text-primary bg-white dark:bg-midnight' 
+              : 'border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
+          }`}
+        >
+          {isAr ? 'التركيبات' : 'Installations'}
+        </button>
       </div>
 
       <div className="overflow-x-auto">

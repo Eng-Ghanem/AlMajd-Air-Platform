@@ -1,32 +1,64 @@
 import React, { useState } from 'react';
 import { Send, Loader2 } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
 
 export default function ContactForm({ lang }) {
   const isAr = lang === 'ar';
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     name: '',
     phone: '',
+    address: '',
     serviceType: '',
     message: ''
   });
+  const [prices, setPrices] = useState({});
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
+
+  React.useEffect(() => {
+    fetch(`http://${window.location.hostname}:5000/api/device-prices`)
+      .then(res => res.json())
+      .then(data => {
+        const pricesMap = {};
+        data.forEach(item => {
+          pricesMap[item.id] = {
+            price: Number(item.price),
+            discount: Number(item.discount_percentage || 0)
+          };
+        });
+        setPrices(pricesMap);
+      })
+      .catch(err => console.error('Failed to fetch prices:', err));
+  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     try {
-      const response = await fetch('http://localhost:5000/api/requests', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData)
+      let totalPrice = 0;
+      const getFinalPrice = (id) => {
+        const item = prices[id];
+        if (!item) return 0;
+        return item.price - (item.price * (item.discount / 100));
+      };
+      if (formData.serviceType === (isAr ? 'صيانة دورية' : 'Periodic Maintenance')) totalPrice = getFinalPrice('service_maintenance');
+      if (formData.serviceType === (isAr ? 'تأسيس وتركيب' : 'Installation')) totalPrice = getFinalPrice('service_installation');
+      if (formData.serviceType === (isAr ? 'تنظيف وغسيل' : 'Cleaning')) totalPrice = getFinalPrice('service_cleaning');
+      if (formData.serviceType === (isAr ? 'شحن فريون' : 'Freon Recharge')) totalPrice = getFinalPrice('service_freon');
+
+      const payload = {
+        ...formData,
+        totalPrice
+      };
+
+      navigate('/payment', { 
+        state: { 
+          formData: payload,
+          totalPrice
+        }
       });
-      if (response.ok) {
-        setSuccess(true);
-        setFormData({ name: '', phone: '', serviceType: '', message: '' });
-        setTimeout(() => setSuccess(false), 5000);
-      }
     } catch (error) {
       console.error('Error submitting request:', error);
     } finally {
@@ -88,6 +120,20 @@ export default function ContactForm({ lang }) {
 
         <div>
           <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">
+            {isAr ? 'العنوان بالتفصيل' : 'Detailed Address'}
+          </label>
+          <input
+            type="text"
+            name="address"
+            required
+            value={formData.address}
+            onChange={handleChange}
+            className="w-full px-4 py-3 border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">
             {isAr ? 'نوع الخدمة' : 'Service Type'}
           </label>
           <select
@@ -98,11 +144,30 @@ export default function ContactForm({ lang }) {
             className="w-full px-4 py-3 border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
           >
             <option value="">{isAr ? 'اختر الخدمة...' : 'Select service...'}</option>
-            <option value="maintenance">{isAr ? 'صيانة دورية' : 'Periodic Maintenance'}</option>
-            <option value="installation">{isAr ? 'تأسيس وتركيب' : 'Installation'}</option>
-            <option value="cleaning">{isAr ? 'تنظيف وغسيل' : 'Cleaning'}</option>
-            <option value="freon">{isAr ? 'شحن فريون' : 'Freon Recharge'}</option>
-            <option value="other">{isAr ? 'أخرى' : 'Other'}</option>
+            {[
+              { id: 'service_maintenance', ar: 'صيانة دورية', en: 'Periodic Maintenance' },
+              { id: 'service_installation', ar: 'تأسيس وتركيب', en: 'Installation' },
+              { id: 'service_cleaning', ar: 'تنظيف وغسيل', en: 'Cleaning' },
+              { id: 'service_freon', ar: 'شحن فريون', en: 'Freon Recharge' }
+            ].map(service => {
+              const priceData = prices[service.id];
+              let priceText = '';
+              if (priceData && priceData.price > 0) {
+                if (priceData.discount > 0) {
+                  const finalPrice = priceData.price - (priceData.price * (priceData.discount / 100));
+                  priceText = isAr 
+                    ? `(${finalPrice} ج.م بدلاً من ${priceData.price} ج.م)`
+                    : `(${finalPrice} EGP instead of ${priceData.price} EGP)`;
+                } else {
+                  priceText = isAr ? `(${priceData.price} ج.م)` : `(${priceData.price} EGP)`;
+                }
+              }
+              return (
+                <option key={service.id} value={isAr ? service.ar : service.en}>
+                  {isAr ? service.ar : service.en} {priceText}
+                </option>
+              );
+            })}
           </select>
         </div>
 

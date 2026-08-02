@@ -1,10 +1,12 @@
-import React from 'react';
-import { motion } from 'framer-motion';
-import { PackageCheck, Home, Wrench } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import React, { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { PackageCheck, Home, Wrench, X, Settings2, ShieldCheck, Wind, Droplets } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 export default function ServiceOptions({ lang }) {
   const isAr = lang === 'ar';
+  const navigate = useNavigate();
+  const [showMaintenanceModal, setShowMaintenanceModal] = useState(false);
 
   const options = [
     {
@@ -91,7 +93,17 @@ export default function ServiceOptions({ lang }) {
           className="grid grid-cols-1 md:grid-cols-3 gap-8"
         >
           {options.map((option) => (
-            <Link to={`/service-options/${option.id}`} key={option.id} className="block group">
+            <div 
+              key={option.id} 
+              onClick={() => {
+                if (option.id === 3) {
+                  setShowMaintenanceModal(true);
+                } else {
+                  navigate(`/service-options/${option.id}`);
+                }
+              }}
+              className="block group cursor-pointer"
+            >
               <motion.div
                 variants={cardVariants}
                 whileHover={{ y: -10 }}
@@ -119,10 +131,61 @@ export default function ServiceOptions({ lang }) {
                   0{option.id}
                 </div>
               </motion.div>
-            </Link>
+            </div>
           ))}
         </motion.div>
       </div>
+
+      {/* Maintenance Sub-options Modal */}
+      <AnimatePresence>
+        {showMaintenanceModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setShowMaintenanceModal(false)}
+              className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className="relative w-full max-w-2xl bg-white dark:bg-midnight border border-slate-100 dark:border-slate-800 rounded-3xl shadow-2xl overflow-hidden z-10"
+            >
+              <div className="p-6 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center bg-slate-50/50 dark:bg-slate-800/30">
+                <h3 className="font-bold text-xl text-slate-900 dark:text-white flex items-center gap-3">
+                  <Wrench className="text-primary" size={24}/>
+                  {isAr ? 'اختر نوع خدمة الصيانة' : 'Select Maintenance Type'}
+                </h3>
+                <button onClick={() => setShowMaintenanceModal(false)} className="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 bg-white dark:bg-slate-800 rounded-full transition-colors shadow-sm">
+                  <X size={20} />
+                </button>
+              </div>
+
+              <div className="p-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {[
+                  { id: 11, title: isAr ? 'تأسيس وتركيب' : 'Installation & Setup', icon: <Settings2 size={24} /> },
+                  { id: 12, title: isAr ? 'صيانة دورية' : 'Regular Maintenance', icon: <ShieldCheck size={24} /> },
+                  { id: 13, title: isAr ? 'شحن فريون' : 'Freon Charging', icon: <Wind size={24} /> },
+                  { id: 14, title: isAr ? 'تنظيف وغسيل الوحدات' : 'Unit Cleaning', icon: <Droplets size={24} /> }
+                ].map((item) => (
+                  <button
+                    key={item.id}
+                    onClick={() => navigate(`/service-options/${item.id}`)}
+                    className="flex items-center gap-4 p-5 rounded-2xl border-2 border-slate-100 dark:border-slate-800 hover:border-primary dark:hover:border-primary hover:bg-primary/5 dark:hover:bg-primary/10 transition-all text-right group"
+                  >
+                    <div className="w-12 h-12 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 group-hover:bg-primary group-hover:text-white transition-colors flex items-center justify-center shrink-0">
+                      {item.icon}
+                    </div>
+                    <span className="font-bold text-lg text-slate-900 dark:text-white">{item.title}</span>
+                  </button>
+                ))}
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </section>
   );
 }

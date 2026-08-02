@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { User, Mail, Lock, Loader2, ArrowRight, CheckCircle2, Eye, EyeOff } from 'lucide-react';
+import { User, Mail, Phone, Lock, Loader2, ArrowRight, CheckCircle2, Eye, EyeOff } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
 
@@ -11,6 +11,7 @@ export default function SignUpPage({ lang }) {
   // Step 1 State
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
+  const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   
@@ -39,8 +40,19 @@ export default function SignUpPage({ lang }) {
       return;
     }
 
+    // Phone Validation
+    if (phone.length !== 11) {
+      setError(
+        isAr 
+          ? 'يجب أن يتكون رقم الهاتف من 11 رقماً.' 
+          : 'Phone number must be exactly 11 digits.'
+      );
+      setLoading(false);
+      return;
+    }
+
     try {
-      const { data, error: signUpError } = await register(email, password, name);
+      const { data, error: signUpError } = await register(email, password, name, phone);
       
       if (signUpError) {
         throw signUpError;
@@ -56,6 +68,30 @@ export default function SignUpPage({ lang }) {
         errorMessage = isAr ? 'هذا البريد الإلكتروني مسجل بالفعل.' : 'This email is already registered.';
       }
       setError(errorMessage);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleVerifyOtp = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setError('');
+    
+    try {
+      const { data, error: verifyError } = await verifyOtp(email, otp, 'signup');
+      
+      if (verifyError) {
+        throw verifyError;
+      }
+      
+      setStep(3); // Success step
+      setTimeout(() => {
+        window.location.href = '/login';
+      }, 2000);
+    } catch (err) {
+      console.error('OTP verify error:', err);
+      setError(isAr ? 'رمز التحقق غير صحيح أو منتهي الصلاحية.' : 'Invalid or expired OTP code.');
     } finally {
       setLoading(false);
     }
@@ -103,6 +139,32 @@ export default function SignUpPage({ lang }) {
                       onChange={(e) => setName(e.target.value)}
                       className={`w-full ${isAr ? 'pr-10 pl-3' : 'pl-10 pr-3'} py-3 border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all`}
                       placeholder={isAr ? 'اسمك الكريم' : 'John Doe'}
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">
+                    {isAr ? 'رقم الهاتف' : 'Phone Number'}
+                  </label>
+                  <div className="relative">
+                    <div className={`absolute inset-y-0 ${isAr ? 'right-0 pr-3' : 'left-0 pl-3'} flex items-center pointer-events-none`}>
+                      <Phone className="h-5 w-5 text-slate-400" />
+                    </div>
+                    <input
+                      type="tel"
+                      required
+                      value={phone}
+                      onChange={(e) => {
+                        const val = e.target.value.replace(/\D/g, '');
+                        if (val.length <= 11) setPhone(val);
+                      }}
+                      maxLength="11"
+                      minLength="11"
+                      pattern="[0-9]{11}"
+                      className={`w-full ${isAr ? 'pr-10 pl-3' : 'pl-10 pr-3'} py-3 border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all`}
+                      placeholder="01234567890"
+                      dir="ltr"
                     />
                   </div>
                 </div>
@@ -174,29 +236,71 @@ export default function SignUpPage({ lang }) {
               </Link>
             </p>
           </>
-        ) : (
+        ) : step === 2 ? (
           <motion.div
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
           >
-            <div className="text-center">
-              <div className="w-16 h-16 bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-full flex items-center justify-center mx-auto mb-4">
-                <CheckCircle2 className="w-8 h-8" />
-              </div>
+            <div className="text-center mb-8">
               <h2 className="text-3xl font-black text-slate-900 dark:text-white mb-2">
-                {isAr ? 'تم التسجيل بنجاح' : 'Registration Successful'}
+                {isAr ? 'تأكيد البريد الإلكتروني' : 'Confirm Email'}
               </h2>
-              <p className="text-slate-500 dark:text-slate-400 mt-4 leading-relaxed">
-                {isAr 
-                  ? `أرسلنا رابط التفعيل إلى بريدك الإلكتروني (${email}). يرجى مراجعة البريد الوارد (أو مجلد الرسائل غير المرغوب فيها) والضغط على الرابط لتفعيل حسابك والبدء في استخدام المنصة.` 
-                  : `We sent an activation link to your email (${email}). Please check your inbox (or spam folder) and click the link to activate your account and start using the platform.`}
+              <p className="text-slate-500 dark:text-slate-400">
+                {isAr ? `أرسلنا رمز تحقق إلى ${email}` : `We sent a verification code to ${email}`}
               </p>
             </div>
 
-            <div className="mt-8 text-center">
-              <Link to="/login" className="font-bold text-primary hover:text-accent transition-colors">
-                {isAr ? 'العودة لصفحة تسجيل الدخول' : 'Back to Login'}
-              </Link>
+            {error && (
+              <div className="mb-4 bg-red-50 text-red-600 p-3 rounded-lg text-sm font-semibold text-center">
+                {error}
+              </div>
+            )}
+
+            <form className="space-y-6" onSubmit={handleVerifyOtp}>
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">
+                  {isAr ? 'رمز التأكيد' : 'Verification Code'}
+                </label>
+                <input
+                  type="text"
+                  required
+                  maxLength={8}
+                  value={otp}
+                  onChange={(e) => setOtp(e.target.value.replace(/\D/g, ''))}
+                  className="w-full text-center tracking-[0.5em] text-2xl py-3 border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
+                  placeholder="00000000"
+                />
+              </div>
+
+              <button
+                type="submit"
+                disabled={loading || otp.length < 6}
+                className="w-full flex justify-center items-center gap-2 py-3.5 px-4 border border-transparent rounded-xl shadow-md text-base font-bold text-white bg-gradient-to-r from-primary to-accent hover:scale-[1.02] transition-transform focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-70 disabled:scale-100"
+              >
+                {loading ? <Loader2 className="animate-spin h-5 w-5" /> : (
+                  <>
+                    {isAr ? 'تأكيد الحساب' : 'Verify Account'}
+                    <ArrowRight className={`h-5 w-5 ${isAr ? 'rotate-180' : ''}`} />
+                  </>
+                )}
+              </button>
+            </form>
+          </motion.div>
+        ) : (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+          >
+            <div className="text-center py-8">
+              <div className="w-16 h-16 bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 rounded-full flex items-center justify-center mx-auto mb-4">
+                <CheckCircle2 className="w-8 h-8" />
+              </div>
+              <h2 className="text-2xl font-black text-slate-900 dark:text-white mb-2">
+                {isAr ? 'تم تأكيد الحساب بنجاح!' : 'Account Verified Successfully!'}
+              </h2>
+              <p className="text-slate-500 dark:text-slate-400">
+                {isAr ? 'جاري توجيهك لصفحة تسجيل الدخول...' : 'Redirecting to login...'}
+              </p>
             </div>
           </motion.div>
         )}

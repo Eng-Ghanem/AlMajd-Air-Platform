@@ -11,6 +11,7 @@ export default function ProfilePage({ lang }) {
 
   const [formData, setFormData] = useState({
     name: '',
+    phone: '',
     email: '',
     password: '',
     confirmPassword: ''
@@ -29,6 +30,7 @@ export default function ProfilePage({ lang }) {
       setFormData(prev => ({
         ...prev,
         name: profile.name || '',
+        phone: profile.phone || '',
         email: profile.email || ''
       }));
     }
@@ -50,7 +52,8 @@ export default function ProfilePage({ lang }) {
     
     setLoading(prev => ({ ...prev, profile: true }));
     const { error } = await updateProfile(profile.id, { 
-      name: formData.name
+      name: formData.name,
+      phone: formData.phone
     });
     
     setLoading(prev => ({ ...prev, profile: false }));
@@ -140,18 +143,34 @@ export default function ProfilePage({ lang }) {
               <User className="text-primary" size={24} />
               {isAr ? 'البيانات الشخصية' : 'Personal Information'}
             </h2>
-            <div className="mb-6">
-              <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">
-                {isAr ? 'الاسم بالكامل' : 'Full Name'}
-              </label>
-              <input
-                type="text"
-                name="name"
-                value={formData.name}
-                onChange={handleChange}
-                className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 text-slate-900 dark:text-white focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all"
-                required
-              />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+              <div>
+                <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">
+                  {isAr ? 'الاسم بالكامل' : 'Full Name'}
+                </label>
+                <input
+                  type="text"
+                  name="name"
+                  value={formData.name}
+                  onChange={handleChange}
+                  className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 text-slate-900 dark:text-white focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2 flex items-center gap-2">
+                  <Phone size={16} className="text-primary" />
+                  {isAr ? 'رقم الهاتف' : 'Phone Number'}
+                </label>
+                <input
+                  type="tel"
+                  name="phone"
+                  value={formData.phone}
+                  onChange={handleChange}
+                  className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 text-slate-900 dark:text-white focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all"
+                  dir="ltr"
+                />
+              </div>
             </div>
             <div className="flex justify-end">
               <button

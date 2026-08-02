@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { ArrowRight, ArrowLeft, PackageCheck, Home, Wrench, CreditCard, Banknote, Info, CheckCircle2 } from 'lucide-react';
 import { motion } from 'framer-motion';
@@ -7,6 +7,31 @@ import SmartPaymentSystem from '../components/SmartPaymentSystem';
 export default function ServiceOptionDetailsPage({ lang }) {
   const { id } = useParams();
   const isAr = lang === 'ar';
+
+  const [basePrice, setBasePrice] = useState(id === '3' || parseInt(id) >= 11 ? 500 : 0);
+
+  useEffect(() => {
+    if (id === '3' || parseInt(id) >= 11) {
+      fetch(`http://${window.location.hostname}:5000/api/device-prices`)
+        .then(res => res.json())
+        .then(data => {
+          let serviceDbId = 'service_maintenance';
+          if (id === '11') serviceDbId = 'service_installation';
+          else if (id === '12' || id === '3') serviceDbId = 'service_maintenance';
+          else if (id === '13') serviceDbId = 'service_freon';
+          else if (id === '14') serviceDbId = 'service_cleaning';
+
+          const service = data.find(p => p.id === serviceDbId);
+          if (service) {
+            const finalPrice = service.price - (service.price * (service.discount_percentage / 100));
+            setBasePrice(finalPrice);
+          }
+        })
+        .catch(err => console.error('Failed to load service price', err));
+    } else {
+      setBasePrice(0);
+    }
+  }, [id]);
 
   // Hardcoded detailed data for demonstration
   const optionsData = {
@@ -18,8 +43,8 @@ export default function ServiceOptionDetailsPage({ lang }) {
       descriptionEn: 'We provide the right AC unit for your space, then send a team of specialized engineers and technicians to install, operate, and ensure its efficiency.',
       stepsAr: ['معاينة المكان', 'اختيار الجهاز المناسب', 'التوريد السريع', 'التركيب والتشغيل', 'المتابعة بعد البيع'],
       stepsEn: ['Site inspection', 'Choosing the right unit', 'Fast supply', 'Installation and operation', 'After-sales follow-up'],
-      paymentMethodsAr: ['دفع كاش عند التركيب', 'دفع إلكتروني مقدم (فيزا/ماستركارد)'],
-      paymentMethodsEn: ['Cash on Installation', 'Online Prepaid (Visa/Mastercard)'],
+      paymentMethodsAr: ['دفع كاش عند التركيب', 'دفع إلكتروني مقدم (محافظ كاش/إنستاباي)'],
+      paymentMethodsEn: ['Cash on Installation', 'Online Prepaid (Wallets/InstaPay)'],
     },
     '2': {
       title: isAr ? 'توريد لحد البيت بس' : 'Supply to Home Only',
@@ -42,6 +67,50 @@ export default function ServiceOptionDetailsPage({ lang }) {
       stepsEn: ['Register maintenance request', 'Schedule visit', 'Inspection and fault diagnosis', 'Repair or regular maintenance'],
       paymentMethodsAr: ['الدفع بعد إتمام الصيانة', 'دفع إلكتروني مقدم'],
       paymentMethodsEn: ['Payment after maintenance', 'Online Prepaid'],
+    },
+    '11': {
+      title: isAr ? 'التأسيس والتركيب' : 'Installation & Setup',
+      color: 'from-blue-600 to-blue-400',
+      icon: <Wrench size={64} className="text-white" />,
+      descriptionAr: 'نقوم بتأسيس مسارات النحاس وتركيب جميع أنواع المكيفات باحترافية عالية لضمان أفضل أداء.',
+      descriptionEn: 'We lay copper tracks and install all types of ACs with high professionalism for optimal performance.',
+      stepsAr: ['معاينة الموقع', 'تجهيز مسارات النحاس', 'التركيب الاحترافي', 'التشغيل والاختبار'],
+      stepsEn: ['Site inspection', 'Preparing copper tracks', 'Professional installation', 'Testing & operation'],
+      paymentMethodsAr: ['الدفع بعد إتمام الخدمة', 'دفع إلكتروني مقدم'],
+      paymentMethodsEn: ['Payment after service', 'Online Prepaid']
+    },
+    '12': {
+      title: isAr ? 'الصيانة الدورية' : 'Regular Maintenance',
+      color: 'from-accent-dark to-accent',
+      icon: <Wrench size={64} className="text-white" />,
+      descriptionAr: 'فحص شامل للمكيفات وإصلاح الأعطال قبل تفاقمها لضمان هواء نقي وكفاءة تبريد مستمرة.',
+      descriptionEn: 'Comprehensive AC inspection and fault repair before they escalate to ensure pure air and continuous cooling efficiency.',
+      stepsAr: ['الفحص الشامل', 'تنظيف الفلاتر', 'مراجعة الدوائر', 'الاختبار والتسليم'],
+      stepsEn: ['Comprehensive check', 'Cleaning filters', 'Circuit review', 'Testing and handover'],
+      paymentMethodsAr: ['الدفع بعد إتمام الصيانة', 'دفع إلكتروني مقدم'],
+      paymentMethodsEn: ['Payment after maintenance', 'Online Prepaid']
+    },
+    '13': {
+      title: isAr ? 'شحن الفريون' : 'Freon Charging',
+      color: 'from-cyan-600 to-cyan-400',
+      icon: <Wrench size={64} className="text-white" />,
+      descriptionAr: 'نقدم خدمة شحن فريون عالي الجودة مع فحص التسريبات لضمان تبريد ممتاز وتقليل استهلاك الكهرباء.',
+      descriptionEn: 'We provide high-quality freon charging service with leak checks to ensure excellent cooling and reduce electricity consumption.',
+      stepsAr: ['قياس مستوى الفريون', 'فحص التسريبات', 'الشحن الآمن', 'مراجعة التبريد'],
+      stepsEn: ['Measure freon level', 'Leak check', 'Safe charging', 'Cooling review'],
+      paymentMethodsAr: ['الدفع بعد إتمام الخدمة', 'دفع إلكتروني مقدم'],
+      paymentMethodsEn: ['Payment after service', 'Online Prepaid']
+    },
+    '14': {
+      title: isAr ? 'تنظيف وغسيل الوحدات' : 'Units Cleaning & Washing',
+      color: 'from-teal-600 to-teal-400',
+      icon: <Wrench size={64} className="text-white" />,
+      descriptionAr: 'غسيل احترافي للوحدات الداخلية والخارجية بالمعدات المتطورة لإزالة الأتربة والبكتيريا.',
+      descriptionEn: 'Professional washing of indoor and outdoor units with advanced equipment to remove dust and bacteria.',
+      stepsAr: ['فك الأغطية', 'غسيل الوحدة الداخلية', 'غسيل الوحدة الخارجية', 'التجفيف والتشغيل'],
+      stepsEn: ['Remove covers', 'Wash indoor unit', 'Wash outdoor unit', 'Drying and operation'],
+      paymentMethodsAr: ['الدفع بعد إتمام الخدمة', 'دفع إلكتروني مقدم'],
+      paymentMethodsEn: ['Payment after service', 'Online Prepaid']
     }
   };
 
@@ -133,7 +202,7 @@ export default function ServiceOptionDetailsPage({ lang }) {
               <SmartPaymentSystem 
                 isAr={isAr} 
                 optionTitle={option.title} 
-                basePrice={id === '3' ? 500 : 0} 
+                basePrice={basePrice} 
                 requiresDeviceSelection={id === '1' || id === '2'} 
               />
             </div>

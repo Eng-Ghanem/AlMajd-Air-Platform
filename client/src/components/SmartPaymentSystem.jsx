@@ -45,14 +45,16 @@ export default function SmartPaymentSystem({ isAr, optionTitle, basePrice = 0, r
   const urlCapacity = searchParams.get('capacity');
 
   const [devices, setDevices] = useState(defaultDevices);
+  const [allPrices, setAllPrices] = useState([]);
   const [pricesLoaded, setPricesLoaded] = useState(!requiresDeviceSelection);
   const [selectedDevice, setSelectedDevice] = useState(null);
 
   useEffect(() => {
     if (requiresDeviceSelection) {
-      fetch('http://localhost:5000/api/device-prices')
+      fetch(`http://${window.location.hostname}:5000/api/device-prices`)
         .then(res => res.json())
         .then(dbPrices => {
+          setAllPrices(dbPrices);
           const merged = defaultDevices.map(d => {
             const match = dbPrices.find(p => p.id === d.id);
             return match ? { ...d, price: match.price, discount_percentage: match.discount_percentage } : d;
@@ -72,13 +74,18 @@ export default function SmartPaymentSystem({ isAr, optionTitle, basePrice = 0, r
       const normalizedBrand = urlBrand.toLowerCase().replace(/\s+/g, '_');
       const targetId = `${normalizedBrand}_${urlCapacity}`;
       const found = devices.find(d => d.id === targetId);
-      if (found) setSelectedDevice(found);
+      if (found) {
+        setSelectedDevice(found);
+        setStep(1);
+      }
     }
   }, [urlBrand, urlCapacity, devices, pricesLoaded]);
 
-  const [step, setStep] = useState(requiresDeviceSelection && !selectedDevice ? 0 : 1);
+  const hasUrlSelection = Boolean(urlBrand && urlCapacity);
+  const [step, setStep] = useState(requiresDeviceSelection && !hasUrlSelection ? 0 : 1);
   const [loading, setLoading] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState('');
+  const [exactMethod, setExactMethod] = useState('instapay');
   const [bookingId, setBookingId] = useState('');
 
   const [date, setDate] = useState('');
@@ -99,8 +106,8 @@ export default function SmartPaymentSystem({ isAr, optionTitle, basePrice = 0, r
           const canvas = document.createElement('canvas');
           let width = img.width;
           let height = img.height;
-          const MAX_WIDTH = 800;
-          const MAX_HEIGHT = 800;
+          const MAX_WIDTH = 400;
+          const MAX_HEIGHT = 400;
           if (width > height) {
             if (width > MAX_WIDTH) { height = Math.round((height *= MAX_WIDTH / width)); width = MAX_WIDTH; }
           } else {
@@ -110,7 +117,7 @@ export default function SmartPaymentSystem({ isAr, optionTitle, basePrice = 0, r
           canvas.height = height;
           const ctx = canvas.getContext('2d');
           ctx.drawImage(img, 0, 0, width, height);
-          const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.6);
+          const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.5);
           setPaymentScreenshot(compressedDataUrl);
         };
         img.src = event.target.result;
@@ -125,7 +132,21 @@ export default function SmartPaymentSystem({ isAr, optionTitle, basePrice = 0, r
     return device.price - (device.price * (discount / 100));
   };
 
-  const finalPrice = requiresDeviceSelection && selectedDevice ? getDeviceFinalPrice(selectedDevice) : basePrice;
+  const getInstallationPriceForDevice = (deviceId) => {
+    const isInstallationIncluded = optionTitle?.includes('توريد وتركيب') || optionTitle?.includes('Installation');
+    if (!isInstallationIncluded) return 0;
+    let brandId = deviceId.split('_')[0];
+    if (deviceId.startsWith('free_air')) brandId = 'free_air';
+    const installService = allPrices.find(p => p.id === `service_install_${brandId}`);
+    if (installService) {
+      return installService.price - (installService.price * (installService.discount_percentage / 100));
+    }
+    return 0;
+  };
+
+  const selectedDevicePrice = requiresDeviceSelection && selectedDevice ? getDeviceFinalPrice(selectedDevice) : 0;
+  const selectedInstallationPrice = requiresDeviceSelection && selectedDevice ? getInstallationPriceForDevice(selectedDevice.id) : 0;
+  const finalPrice = requiresDeviceSelection && selectedDevice ? selectedDevicePrice + selectedInstallationPrice : basePrice;
 
   const handleDeviceNext = () => {
     if (!selectedDevice) {
@@ -166,10 +187,14 @@ export default function SmartPaymentSystem({ isAr, optionTitle, basePrice = 0, r
       } else if (paymentMethod === 'cash') {
         message += `\nPayment: Cash on Delivery`;
       }
-      const res = await fetch('http://localhost:5000/api/requests', {
+      let finalPaymentMethod = paymentMethod;
+      if (paymentMethod === 'card') {
+         finalPaymentMethod = exactMethod;
+      }
+      const res = await fetch(`http://${window.location.hostname}:5000/api/requests`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: user.name, phone: phone, serviceType: optionTitle, message: message, totalPrice: finalPrice })
+        body: JSON.stringify({ name: user.name, phone: phone, serviceType: optionTitle, message: message, totalPrice: finalPrice, paymentMethod: finalPaymentMethod })
       });
       const data = await res.json();
       if (res.ok) {
@@ -197,7 +222,7 @@ export default function SmartPaymentSystem({ isAr, optionTitle, basePrice = 0, r
   const formattedPrice = new Intl.NumberFormat('en-EG', { style: 'currency', currency: 'EGP' }).format(finalPrice);
 
   return (
-    <div className="bg-white/80 dark:bg-midnight/80 backdrop-blur-xl border border-slate-200/50 dark:border-slate-700/50 shadow-[0_30px_60px_-15px_rgba(0,180,216,0.15)] rounded-[2.5rem] p-6 sm:p-10 relative overflow-hidden h-[600px] flex flex-col">
+    <div className="bg-white/80 dark:bg-midnight/80 backdrop-blur-xl border border-slate-200/50 dark:border-slate-700/50 shadow-[0_30px_60px_-15px_rgba(0,180,216,0.15)] rounded-[2.5rem] p-5 sm:p-10 relative overflow-hidden h-[500px] sm:h-[600px] flex flex-col">
       <div className="absolute -top-32 -right-32 w-64 h-64 bg-primary/20 rounded-full blur-[80px] pointer-events-none"></div>
       {step > 0 && (
         <div className="flex justify-between mb-8 relative z-10">
@@ -214,48 +239,69 @@ export default function SmartPaymentSystem({ isAr, optionTitle, basePrice = 0, r
         </div>
       )}
 
-      <div className="flex-1 relative z-10 overflow-y-auto pr-1 pb-4">
+      <div className="flex-1 relative z-10 overflow-y-auto overflow-x-hidden pr-1 pb-4">
         <AnimatePresence mode="wait">
           {step === 0 && (
             <motion.div key="step0" variants={slideVariants} initial="initial" animate="animate" exit="exit" className="h-full flex flex-col">
               <h3 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">{isAr ? 'اختر نوع الجهاز' : 'Choose Device Type'}</h3>
               <p className="text-slate-500 mb-6">{isAr ? 'يرجى اختيار التكييف المناسب لك لمعرفة السعر.' : 'Please select your preferred AC unit.'}</p>
               {formError && <div className="text-red-500 text-sm mb-4 font-bold">{formError}</div>}
-              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 flex-1 overflow-y-auto pr-2 pb-4">
-                {devices.map(device => (
-                  <label key={device.id} className={`relative flex flex-col p-5 border-2 rounded-2xl cursor-pointer transition-all ${selectedDevice?.id === device.id ? 'border-primary bg-primary/5 shadow-md shadow-primary/10' : 'border-slate-200 dark:border-slate-700 hover:border-primary/50 hover:bg-slate-50 dark:hover:bg-slate-800/50'}`}>
-                    <input type="radio" name="device" value={device.id} className="peer sr-only" onChange={() => setSelectedDevice(device)} />
-                    
-                    <div className="flex items-start justify-between mb-4">
-                      <div className="flex items-center gap-3">
-                        <div className={`p-2 rounded-xl ${selectedDevice?.id === device.id ? 'bg-primary text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-500'}`}>
-                          <PackageCheck size={24} />
+              {pricesLoaded ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 flex-1 overflow-y-auto pr-2 pb-4">
+                  {devices.map(device => {
+                    const devPrice = getDeviceFinalPrice(device);
+                    const instPrice = getInstallationPriceForDevice(device.id);
+                    const totPrice = devPrice + instPrice;
+                    return (
+                    <label key={device.id} className={`relative flex flex-col p-5 border-2 rounded-2xl cursor-pointer transition-all ${selectedDevice?.id === device.id ? 'border-primary bg-primary/5 shadow-md shadow-primary/10' : 'border-slate-200 dark:border-slate-700 hover:border-primary/50 hover:bg-slate-50 dark:hover:bg-slate-800/50'}`}>
+                      <input type="radio" name="device" value={device.id} className="peer sr-only" onChange={() => setSelectedDevice(device)} />
+                      
+                      <div className="flex items-start justify-between mb-4">
+                        <div className="flex items-center gap-3">
+                          <div className={`p-2 rounded-xl ${selectedDevice?.id === device.id ? 'bg-primary text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-500'}`}>
+                            <PackageCheck size={24} />
+                          </div>
+                          <span className="font-bold text-lg text-slate-900 dark:text-white">
+                            {isAr ? device.nameAr : device.nameEn}
+                          </span>
                         </div>
-                        <span className="font-bold text-lg text-slate-900 dark:text-white">
-                          {isAr ? device.nameAr : device.nameEn}
-                        </span>
+                        
+                        {device.discount_percentage > 0 && (
+                          <span className="bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 font-bold text-xs px-2.5 py-1 rounded-full whitespace-nowrap">
+                            {device.discount_percentage}% {isAr ? 'خصم' : 'OFF'}
+                          </span>
+                        )}
                       </div>
                       
-                      {device.discount_percentage > 0 && (
-                        <span className="bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 font-bold text-xs px-2.5 py-1 rounded-full whitespace-nowrap">
-                          {device.discount_percentage}% {isAr ? 'خصم' : 'OFF'}
-                        </span>
-                      )}
-                    </div>
-                    
-                    <div className="mt-auto pt-4 border-t border-slate-100 dark:border-slate-700/50 flex flex-col items-end">
-                      {device.discount_percentage > 0 && (
-                        <div className="text-sm text-slate-400 line-through mb-1 font-medium">
-                          {new Intl.NumberFormat('en-EG', { style: 'currency', currency: 'EGP' }).format(device.price)}
-                        </div>
-                      )}
-                      <div className="text-2xl font-black text-primary">
-                        {new Intl.NumberFormat('en-EG', { style: 'currency', currency: 'EGP' }).format(getDeviceFinalPrice(device))}
+                      <div className="mt-auto pt-4 border-t border-slate-100 dark:border-slate-700/50 flex flex-col items-end">
+                        {device.discount_percentage > 0 && (
+                          <div className="text-sm text-slate-400 line-through mb-1 font-medium">
+                            {new Intl.NumberFormat('en-EG', { style: 'currency', currency: 'EGP' }).format(device.price)}
+                          </div>
+                        )}
+                        {instPrice > 0 ? (
+                          <div className="flex flex-col items-end mb-1">
+                            <span className="text-xs text-slate-500">{isAr ? 'الجهاز: ' : 'Device: '}{new Intl.NumberFormat('en-EG', { style: 'currency', currency: 'EGP' }).format(devPrice)}</span>
+                            <span className="text-xs text-slate-500">{isAr ? 'التركيب: ' : 'Install: '}{new Intl.NumberFormat('en-EG', { style: 'currency', currency: 'EGP' }).format(instPrice)}</span>
+                            <div className="text-2xl font-black text-primary mt-1">
+                              {new Intl.NumberFormat('en-EG', { style: 'currency', currency: 'EGP' }).format(totPrice)}
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="text-2xl font-black text-primary">
+                            {new Intl.NumberFormat('en-EG', { style: 'currency', currency: 'EGP' }).format(devPrice)}
+                          </div>
+                        )}
                       </div>
-                    </div>
-                  </label>
-                ))}
-              </div>
+                    </label>
+                  )})}
+                </div>
+              ) : (
+                <div className="flex-1 flex flex-col items-center justify-center">
+                  <Loader2 className="w-10 h-10 animate-spin text-primary mb-4" />
+                  <p className="text-slate-500 font-medium">{isAr ? 'جاري تحميل الأسعار والموديلات...' : 'Loading prices and models...'}</p>
+                </div>
+              )}
               <button onClick={handleDeviceNext} className="w-full bg-primary hover:bg-primary-dark text-white rounded-xl py-4 font-bold flex items-center justify-center gap-2 transition-colors mt-auto shadow-lg shadow-primary/20 shrink-0">
                 {isAr ? 'التالي' : 'Next'} {isAr ? <ChevronLeft size={20} /> : <ChevronRight size={20} />}
               </button>
@@ -264,15 +310,38 @@ export default function SmartPaymentSystem({ isAr, optionTitle, basePrice = 0, r
 
           {step === 1 && (
             <motion.div key="step1" variants={slideVariants} initial="initial" animate="animate" exit="exit" className="h-full flex flex-col">
-              <div className="flex justify-between items-end mb-6">
+              <div className="flex flex-col md:flex-row md:justify-between items-start mb-6 gap-4">
                 <div>
                   <h3 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">{isAr ? 'تفاصيل الحجز' : 'Booking Details'}</h3>
                   <p className="text-slate-500">{isAr ? 'يرجى إدخال تفاصيل الموعد والمكان.' : 'Please enter appointment and location details.'}</p>
                 </div>
                 {finalPrice > 0 && (
-                  <div className="text-right">
-                    <p className="text-xs text-slate-400">{isAr ? 'الإجمالي' : 'Total'}</p>
-                    <p className="font-bold text-primary">{formattedPrice}</p>
+                  <div className="bg-slate-50 dark:bg-slate-800/50 p-4 rounded-2xl border border-slate-100 dark:border-slate-700 min-w-[240px] w-full md:w-auto shrink-0 shadow-sm">
+                    {selectedInstallationPrice > 0 ? (
+                      <>
+                        <div className="flex justify-between items-center mb-2 pb-2 border-b border-slate-200 dark:border-slate-700/50">
+                          <span className="text-sm text-slate-500">{isAr ? 'سعر الجهاز' : 'Device Price'}</span>
+                          <span className="font-semibold text-slate-700 dark:text-slate-300">
+                            {new Intl.NumberFormat('en-EG', { style: 'currency', currency: 'EGP' }).format(selectedDevicePrice)}
+                          </span>
+                        </div>
+                        <div className="flex justify-between items-center mb-3 pb-2 border-b border-slate-200 dark:border-slate-700/50">
+                          <span className="text-sm text-slate-500">{isAr ? 'سعر التركيب' : 'Installation'}</span>
+                          <span className="font-semibold text-slate-700 dark:text-slate-300">
+                            {new Intl.NumberFormat('en-EG', { style: 'currency', currency: 'EGP' }).format(selectedInstallationPrice)}
+                          </span>
+                        </div>
+                        <div className="flex justify-between items-center">
+                          <span className="text-sm font-bold text-slate-900 dark:text-white">{isAr ? 'الإجمالي' : 'Total'}</span>
+                          <span className="font-black text-primary text-lg">{formattedPrice}</span>
+                        </div>
+                      </>
+                    ) : (
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm font-bold text-slate-900 dark:text-white">{isAr ? 'الإجمالي' : 'Total'}</span>
+                        <span className="font-black text-primary text-xl">{formattedPrice}</span>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
@@ -301,12 +370,12 @@ export default function SmartPaymentSystem({ isAr, optionTitle, basePrice = 0, r
                 </div>
               </div>
               <div className="flex gap-4 mt-auto pt-4 shrink-0">
-                {requiresDeviceSelection && (
+                {requiresDeviceSelection && !hasUrlSelection && (
                   <button onClick={() => setStep(0)} className="w-1/3 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-xl py-4 font-bold flex items-center justify-center gap-2 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors">
                     {isAr ? 'رجوع' : 'Back'}
                   </button>
                 )}
-                <button onClick={nextStep} className={`${requiresDeviceSelection ? 'w-2/3' : 'w-full'} bg-primary hover:bg-primary-dark text-white rounded-xl py-4 font-bold flex items-center justify-center gap-2 transition-colors shadow-lg shadow-primary/20`}>
+                <button onClick={nextStep} className={`${requiresDeviceSelection && !hasUrlSelection ? 'w-2/3' : 'w-full'} bg-primary hover:bg-primary-dark text-white rounded-xl py-4 font-bold flex items-center justify-center gap-2 transition-colors shadow-lg shadow-primary/20`}>
                   {isAr ? 'التالي' : 'Next'} {isAr ? <ChevronLeft size={20} /> : <ChevronRight size={20} />}
                 </button>
               </div>
@@ -325,7 +394,7 @@ export default function SmartPaymentSystem({ isAr, optionTitle, basePrice = 0, r
                     <div className="flex items-center gap-3">
                       <CreditCard className={paymentMethod === 'card' ? 'text-primary' : 'text-slate-400'} size={24} />
                       <span className="font-bold text-slate-900 dark:text-white">
-                        {isAr ? 'دفع إلكتروني (فيزا، فودافون كاش، محافظ، إنستاباي)' : 'Online Payment (Visa, Wallets, InstaPay)'}
+                        {isAr ? 'دفع إلكتروني (فودافون كاش، جميع محافظ الكاش، وإنستاباي)' : 'Online Payment (All Cash Wallets, InstaPay)'}
                       </span>
                     </div>
                     <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${paymentMethod === 'card' ? 'border-primary' : 'border-slate-300'}`}>
@@ -371,19 +440,32 @@ export default function SmartPaymentSystem({ isAr, optionTitle, basePrice = 0, r
             <motion.div key="step3" variants={slideVariants} initial="initial" animate="animate" exit="exit" className="h-full flex flex-col">
               {paymentMethod === 'card' ? (
                 <div className="flex-1 flex flex-col">
-                  <div className="flex items-center justify-between mb-4">
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-4 gap-4">
                     <div>
                       <h3 className="text-2xl font-bold text-slate-900 dark:text-white mb-1">{isAr ? 'الدفع الإلكتروني اليدوي' : 'Manual Online Payment'}</h3>
                       <p className="text-slate-500 text-sm flex items-center gap-1"><ShieldCheck size={16} className="text-primary" /> {isAr ? 'آمن ومباشر' : 'Secure & Direct'}</p>
                     </div>
-                    <div className="text-right">
-                      <p className="text-sm text-slate-500">{isAr ? 'المبلغ المطلوب' : 'Required Amount'}</p>
-                      <p className="text-xl font-bold text-primary">{formattedPrice}</p>
+                    <div className="bg-primary/5 border border-primary/20 p-3 rounded-xl w-full sm:w-auto text-center sm:text-right">
+                      <p className="text-sm text-primary/70 font-semibold mb-1">{isAr ? 'المبلغ المطلوب دفعه' : 'Required Amount'}</p>
+                      <p className="text-2xl font-black text-primary">{formattedPrice}</p>
                     </div>
                   </div>
                   
                   <div className="bg-slate-50 dark:bg-midnight-lighter p-4 rounded-xl border border-slate-200 dark:border-slate-700 mb-6 text-sm text-slate-700 dark:text-slate-300 space-y-3">
                     <p className="font-bold text-slate-900 dark:text-white mb-2">{isAr ? 'يرجى تحويل المبلغ إلى أحد الحسابات التالية:' : 'Please transfer the amount to one of the following accounts:'}</p>
+                    
+                    <div className="mb-4">
+                      <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">{isAr ? 'اختر وسيلة الدفع التي ستقوم بالتحويل منها:' : 'Select the payment method you will transfer from:'}</label>
+                      <select value={exactMethod} onChange={(e) => setExactMethod(e.target.value)} className="w-full bg-white dark:bg-midnight border border-slate-200 dark:border-slate-700 rounded-xl py-3 px-4 text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-primary">
+                        <option value="instapay">إنستاباي - InstaPay</option>
+                        <option value="vodafone_cash">فودافون كاش - Vodafone Cash</option>
+                        <option value="we_cash">وي كاش - WE Cash</option>
+                        <option value="etisalat_cash">اتصالات كاش - Etisalat Cash</option>
+                        <option value="orange_cash">أورانج كاش - Orange Cash</option>
+
+                      </select>
+                    </div>
+
                     <div className="flex justify-between items-center bg-white dark:bg-midnight p-3 rounded-lg border border-slate-200 dark:border-slate-700">
                       <span>{isAr ? 'فودافون كاش:' : 'Vodafone Cash:'}</span>
                       <span className="font-mono font-bold text-primary">010xxxxxxx</span>

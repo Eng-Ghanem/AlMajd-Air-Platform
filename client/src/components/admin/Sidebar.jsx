@@ -15,6 +15,7 @@ export default function Sidebar({ isAr, currentView, setCurrentView }) {
     { id: 'payments', icon: CreditCard, labelAr: 'الدفعات والمعاملات', labelEn: 'Payments' },
     { id: 'subscriptions', icon: Package, labelAr: 'الاشتراكات', labelEn: 'Subscriptions' },
     { id: 'customers', icon: Users, labelAr: 'العملاء', labelEn: 'Customers' },
+    { id: 'technicians', icon: Users, labelAr: 'إدارة الفنيين', labelEn: 'Technicians' },
   ];
 
   const handleLogout = () => {
@@ -53,8 +54,15 @@ export default function Sidebar({ isAr, currentView, setCurrentView }) {
       </nav>
 
       <div className="p-4 border-t border-slate-100 dark:border-slate-800 space-y-2">
-        <button className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
-          <Settings size={20} />
+        <button 
+          onClick={() => setCurrentView('settings')}
+          className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-colors ${
+            currentView === 'settings' 
+              ? 'bg-primary text-white shadow-md shadow-primary/20 font-bold' 
+              : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/50 hover:text-slate-900 dark:hover:text-white'
+          }`}
+        >
+          <Settings size={20} className={currentView === 'settings' ? 'text-white' : ''} />
           <span>{isAr ? 'الإعدادات' : 'Settings'}</span>
         </button>
         <button onClick={handleLogout} className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors font-semibold">

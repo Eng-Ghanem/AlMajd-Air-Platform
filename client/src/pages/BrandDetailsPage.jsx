@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { ArrowRight, ArrowLeft, CheckCircle } from 'lucide-react';
 import { motion } from 'framer-motion';
@@ -10,8 +10,24 @@ export default function BrandDetailsPage({ lang }) {
   
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedCapacity, setSelectedCapacity] = useState('');
+  const [prices, setPrices] = useState([]);
   
+  useEffect(() => {
+    fetch(`http://${window.location.hostname}:5000/api/device-prices`)
+      .then(res => res.json())
+      .then(data => setPrices(data))
+      .catch(err => console.error('Failed to load prices', err));
+  }, []);
+
   const capacities = ['1.5', '2.25', '3', '4', '5'];
+
+  const getPriceForCapacity = (cap) => {
+    const targetId = `${id}_${cap}`.toLowerCase();
+    const device = prices.find(p => p.id === targetId);
+    if (!device) return null;
+    const finalPrice = device.price - (device.price * (device.discount_percentage / 100));
+    return new Intl.NumberFormat('en-EG', { style: 'currency', currency: 'EGP' }).format(finalPrice);
+  };
 
   const handleSelectCapacity = (capacity) => {
     setSelectedCapacity(capacity);
@@ -28,8 +44,8 @@ export default function BrandDetailsPage({ lang }) {
       descEn: 'Advanced technology and unmatched energy efficiency, the premier choice for superior cooling.',
       longDescAr: 'كاريير هي الشركة الرائدة عالمياً في مجال التبريد والتدفئة. بفضل الابتكار المستمر والتكنولوجيا الفائقة، تضمن لك أجهزة كاريير أداءً مستقراً في أصعب الظروف وتوفيراً هائلاً في استهلاك الكهرباء.',
       longDescEn: 'Carrier is the global leader in heating and cooling solutions. With continuous innovation and superior technology, Carrier units ensure stable performance in the toughest conditions and massive energy savings.',
-      featuresAr: ['توفير حتى 50% من استهلاك الكهرباء', 'فلاتر منقية للهواء من البكتيريا', 'صوت هادئ جداً أثناء التشغيل', 'ضمان 5 سنوات على الكباس'],
-      featuresEn: ['Save up to 50% of energy consumption', 'Air purifying filters from bacteria', 'Ultra-quiet operation', '5-year warranty on the compressor']
+      featuresAr: ['توفير حتى 50% من استهلاك الكهرباء', 'فلاتر منقية للهواء من البكتيريا', 'صوت هادئ جداً أثناء التشغيل'],
+      featuresEn: ['Save up to 50% of energy consumption', 'Air purifying filters from bacteria', 'Ultra-quiet operation']
     },
     midea: {
       name: 'Midea',
@@ -151,15 +167,19 @@ export default function BrandDetailsPage({ lang }) {
                   {isAr ? `احجز تكييف ${brand.name} الآن - اختر القدرة (حصان)` : `Book ${brand.name} Now - Select Capacity (HP)`}
                 </h3>
                 <div className="flex flex-wrap gap-4">
-                  {capacities.map(cap => (
-                    <button 
-                      key={cap}
-                      onClick={() => handleSelectCapacity(cap)}
-                      className="px-8 py-3 rounded-xl bg-gradient-to-r from-primary to-accent text-white font-bold text-lg hover:scale-105 transition-all duration-300 shadow-lg shadow-primary/30"
-                    >
-                      {cap} {isAr ? 'حصان' : 'HP'}
-                    </button>
-                  ))}
+                  {capacities.map(cap => {
+                    const priceStr = getPriceForCapacity(cap);
+                    return (
+                      <button 
+                        key={cap}
+                        onClick={() => handleSelectCapacity(cap)}
+                        className="px-8 py-3 rounded-xl bg-gradient-to-r from-primary to-accent text-white font-bold text-lg hover:scale-105 transition-all duration-300 shadow-lg shadow-primary/30 flex flex-col items-center justify-center gap-1"
+                      >
+                        <span>{cap} {isAr ? 'حصان' : 'HP'}</span>
+                        {priceStr && <span className="text-sm opacity-90 font-medium">{priceStr}</span>}
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
             </motion.div>

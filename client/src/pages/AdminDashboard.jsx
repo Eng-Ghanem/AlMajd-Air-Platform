@@ -12,8 +12,10 @@ import PaymentsTable from '../components/admin/views/PaymentsTable';
 import CustomersTable from '../components/admin/views/CustomersTable';
 import SubscriptionsTable from '../components/admin/views/SubscriptionsTable';
 import PricesManager from '../components/admin/views/PricesManager';
+import SettingsManager from '../components/admin/views/SettingsManager';
+import TechniciansManager from '../components/admin/views/TechniciansManager';
 
-export default function AdminDashboard({ lang }) {
+export default function AdminDashboard({ lang, setLang, theme, setTheme }) {
   const isAr = lang === 'ar';
   
   const [currentView, setCurrentView] = useState('overview');
@@ -23,6 +25,7 @@ export default function AdminDashboard({ lang }) {
   const [payments, setPayments] = useState([]);
   const [subscriptions, setSubscriptions] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [openRequestId, setOpenRequestId] = useState(null);
 
   useEffect(() => {
     fetchAllData();
@@ -32,10 +35,10 @@ export default function AdminDashboard({ lang }) {
     try {
       setLoading(true);
       const [reqRes, usersRes, payRes, subRes] = await Promise.all([
-        fetch('http://localhost:5000/api/requests'),
-        fetch('http://localhost:5000/api/users'),
-        fetch('http://localhost:5000/api/payments'),
-        fetch('http://localhost:5000/api/subscriptions')
+        fetch(`http://${window.location.hostname}:5000/api/requests`),
+        fetch(`http://${window.location.hostname}:5000/api/users`),
+        fetch(`http://${window.location.hostname}:5000/api/payments`),
+        fetch(`http://${window.location.hostname}:5000/api/subscriptions`)
       ]);
 
       if (reqRes.ok) setRequests(await reqRes.json());
@@ -57,13 +60,17 @@ export default function AdminDashboard({ lang }) {
       case 'prices':
         return <PricesManager isAr={isAr} />;
       case 'requests':
-        return <RequestsTable isAr={isAr} requests={requests} loading={loading} fetchRequests={fetchAllData} />;
+        return <RequestsTable isAr={isAr} requests={requests} loading={loading} fetchRequests={fetchAllData} openRequestId={openRequestId} setOpenRequestId={setOpenRequestId} />;
       case 'payments':
         return <PaymentsTable isAr={isAr} payments={payments} loading={loading} />;
       case 'subscriptions':
         return <SubscriptionsTable isAr={isAr} subscriptions={subscriptions} loading={loading} />;
       case 'customers':
         return <CustomersTable isAr={isAr} users={users} loading={loading} />;
+      case 'technicians':
+        return <TechniciansManager isAr={isAr} />;
+      case 'settings':
+        return <SettingsManager isAr={isAr} />;
       default:
         return <Overview isAr={isAr} requests={requests} users={users} payments={payments} subscriptions={subscriptions} />;
     }
@@ -96,7 +103,7 @@ export default function AdminDashboard({ lang }) {
 
       {/* Main Content Area */}
       <main className="flex-1 flex flex-col min-w-0">
-        <TopNav isAr={isAr} setMobileMenuOpen={setMobileMenuOpen} />
+        <TopNav isAr={isAr} lang={lang} setLang={setLang} theme={theme} setTheme={setTheme} setMobileMenuOpen={setMobileMenuOpen} requests={requests} setCurrentView={setCurrentView} setOpenRequestId={setOpenRequestId} />
         
         <div className="flex-1 p-4 sm:p-6 lg:p-8 overflow-y-auto">
           <div className="max-w-7xl mx-auto">

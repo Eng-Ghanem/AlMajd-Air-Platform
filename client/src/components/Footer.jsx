@@ -24,8 +24,8 @@ export default function Footer({ lang }) {
             </Link>
             <p className="text-slate-500 dark:text-slate-400 font-light leading-relaxed">
               {isAr 
-                ? 'منصتك الاحترافية الشاملة لجميع خدمات التكييف. جودة عالية وأداء لا يضاهى يضاهي المعايير العالمية.' 
-                : 'Your professional and comprehensive platform for all AC services. High quality and unmatched performance.'}
+                ? 'منصتك الاحترافية الشاملة لجميع خدمات التكييف. جودة عالية وأداء لا يضاهى يطابق المعايير العالمية.' 
+                : 'Your professional and comprehensive platform for all AC services. High quality and unmatched performance meeting global standards.'}
             </p>
           </div>
 

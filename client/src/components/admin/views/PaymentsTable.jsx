@@ -39,7 +39,7 @@ export default function PaymentsTable({ isAr, payments, loading }) {
       </div>
 
       <div className="overflow-x-auto">
-        <table className="w-full text-sm text-left">
+        <table className={`w-full text-sm ${isAr ? 'text-right' : 'text-left'}`}>
           <thead className="bg-slate-50/80 dark:bg-slate-800/50 text-slate-500 dark:text-slate-400 font-semibold border-b border-slate-100 dark:border-slate-800">
             <tr>
               <th className={`px-6 py-4 ${isAr ? 'text-right' : 'text-left'}`}>{isAr ? 'رقم المعاملة' : 'Transaction ID'}</th>
@@ -77,15 +77,56 @@ export default function PaymentsTable({ isAr, payments, loading }) {
                   </div>
                 </td>
                 <td className="px-6 py-4">
-                  {payment.method === 'card' || payment.method === 'online' ? (
-                    <div className="flex items-center gap-2 text-slate-600 dark:text-slate-300">
-                      <CreditCard size={16} className="text-primary" /> {isAr ? 'بطاقة / تحويل' : 'Card / Transfer'}
-                    </div>
-                  ) : (
-                    <div className="flex items-center gap-2 text-slate-600 dark:text-slate-300">
-                      <Banknote size={16} className="text-green-500" /> {isAr ? 'نقدي' : 'Cash'}
-                    </div>
-                  )}
+                  {(() => {
+                    const method = payment.method || 'cash';
+                    switch(method) {
+                      case 'instapay':
+                        return (
+                          <div className="flex items-center gap-2 text-slate-600 dark:text-slate-300 font-medium">
+                            <CreditCard size={16} className="text-purple-500" /> {isAr ? 'إنستاباي' : 'InstaPay'}
+                          </div>
+                        );
+                      case 'vodafone_cash':
+                        return (
+                          <div className="flex items-center gap-2 text-slate-600 dark:text-slate-300 font-medium">
+                            <CreditCard size={16} className="text-red-500" /> {isAr ? 'فودافون كاش' : 'Vodafone Cash'}
+                          </div>
+                        );
+                      case 'we_cash':
+                        return (
+                          <div className="flex items-center gap-2 text-slate-600 dark:text-slate-300 font-medium">
+                            <CreditCard size={16} className="text-indigo-500" /> {isAr ? 'وي كاش' : 'WE Cash'}
+                          </div>
+                        );
+                      case 'etisalat_cash':
+                        return (
+                          <div className="flex items-center gap-2 text-slate-600 dark:text-slate-300 font-medium">
+                            <CreditCard size={16} className="text-green-600" /> {isAr ? 'اتصالات كاش' : 'Etisalat Cash'}
+                          </div>
+                        );
+                      case 'orange_cash':
+                        return (
+                          <div className="flex items-center gap-2 text-slate-600 dark:text-slate-300 font-medium">
+                            <CreditCard size={16} className="text-orange-500" /> {isAr ? 'أورانج كاش' : 'Orange Cash'}
+                          </div>
+                        );
+                      case 'visa':
+                      case 'card':
+                      case 'online':
+                        return (
+                          <div className="flex items-center gap-2 text-slate-600 dark:text-slate-300 font-medium">
+                            <CreditCard size={16} className="text-primary" /> {isAr ? 'فيزا / بنك' : 'Visa / Bank'}
+                          </div>
+                        );
+                      case 'cash':
+                      default:
+                        return (
+                          <div className="flex items-center gap-2 text-slate-600 dark:text-slate-300 font-medium">
+                            <Banknote size={16} className="text-green-500" /> {isAr ? 'نقدي (عند الاستلام)' : 'Cash'}
+                          </div>
+                        );
+                    }
+                  })()}
                 </td>
                 <td className="px-6 py-4 text-slate-600 dark:text-slate-400" dir="ltr">
                   {new Date(payment.created_at || payment.date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
