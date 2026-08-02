@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Calendar, MapPin, CreditCard, Banknote, ChevronRight, ChevronLeft, CheckCircle2, ShieldCheck, Loader2, AlertCircle, Phone, PackageCheck, Upload } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../lib/supabase';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, Link } from 'react-router-dom';
 
 const defaultDevices = [
   { id: 'carrier_1.5', nameAr: 'تكييف كاريير 1.5 حصان', nameEn: 'Carrier 1.5 HP', price: 0, discount_percentage: 0 },
@@ -308,23 +308,32 @@ export default function SmartPaymentSystem({ isAr, optionTitle, basePrice = 0, r
                         )}
                       </div>
                       
-                      <div className="mt-auto pt-4 border-t border-slate-100 dark:border-slate-700/50 flex flex-col items-end">
+                      <div className="mt-auto pt-4 border-t border-slate-100 dark:border-slate-700/50 w-full">
                         {device.discount_percentage > 0 && (
-                          <div className="text-sm text-slate-400 line-through mb-1 font-medium">
+                          <div className="text-sm text-slate-400 line-through mb-1 font-medium text-left w-full" dir="ltr">
                             {new Intl.NumberFormat('en-EG', { style: 'currency', currency: 'EGP' }).format(device.price)}
                           </div>
                         )}
                         {instPrice > 0 ? (
-                          <div className="flex flex-col items-end mb-1">
-                            <span className="text-xs text-slate-500">{isAr ? 'الجهاز: ' : 'Device: '}{new Intl.NumberFormat('en-EG', { style: 'currency', currency: 'EGP' }).format(devPrice)}</span>
-                            <span className="text-xs text-slate-500">{isAr ? 'التركيب: ' : 'Install: '}{new Intl.NumberFormat('en-EG', { style: 'currency', currency: 'EGP' }).format(instPrice)}</span>
-                            <div className="text-2xl font-black text-primary mt-1">
-                              {new Intl.NumberFormat('en-EG', { style: 'currency', currency: 'EGP' }).format(totPrice)}
+                          <div className="bg-slate-50 dark:bg-slate-800/50 rounded-xl p-3 w-full border border-slate-100 dark:border-slate-700 mt-2">
+                            <div className="flex justify-between items-center mb-1 text-sm">
+                              <span className="text-slate-500 font-medium">{isAr ? 'سعر الجهاز' : 'Device Price'}</span>
+                              <span className="font-bold text-slate-700 dark:text-slate-300">{new Intl.NumberFormat('en-EG', { style: 'currency', currency: 'EGP' }).format(devPrice)}</span>
+                            </div>
+                            <div className="flex justify-between items-center mb-2 pb-2 border-b border-slate-200 dark:border-slate-700/50 text-sm">
+                              <span className="text-slate-500 font-medium">{isAr ? 'سعر التركيب' : 'Installation'}</span>
+                              <span className="font-bold text-slate-700 dark:text-slate-300">{new Intl.NumberFormat('en-EG', { style: 'currency', currency: 'EGP' }).format(instPrice)}</span>
+                            </div>
+                            <div className="flex justify-between items-center pt-1">
+                              <span className="text-sm font-bold text-slate-900 dark:text-white">{isAr ? 'الإجمالي' : 'Total'}</span>
+                              <span className="text-xl sm:text-2xl font-black text-primary">{new Intl.NumberFormat('en-EG', { style: 'currency', currency: 'EGP' }).format(totPrice)}</span>
                             </div>
                           </div>
                         ) : (
-                          <div className="text-2xl font-black text-primary">
-                            {new Intl.NumberFormat('en-EG', { style: 'currency', currency: 'EGP' }).format(devPrice)}
+                          <div className="flex justify-end w-full mt-2">
+                            <span className="text-2xl font-black text-primary">
+                              {new Intl.NumberFormat('en-EG', { style: 'currency', currency: 'EGP' }).format(devPrice)}
+                            </span>
                           </div>
                         )}
                       </div>
@@ -337,83 +346,114 @@ export default function SmartPaymentSystem({ isAr, optionTitle, basePrice = 0, r
                   <p className="text-slate-500 font-medium">{isAr ? 'جاري تحميل الأسعار والموديلات...' : 'Loading prices and models...'}</p>
                 </div>
               )}
-              <button onClick={handleDeviceNext} className="w-full bg-primary hover:bg-primary-dark text-white rounded-xl py-4 font-bold flex items-center justify-center gap-2 transition-colors mt-auto shadow-lg shadow-primary/20 shrink-0">
-                {isAr ? 'التالي' : 'Next'} {isAr ? <ChevronLeft size={20} /> : <ChevronRight size={20} />}
+              <button onClick={handleDeviceNext} className="w-full bg-gradient-to-r from-primary to-accent hover:from-primary-dark hover:to-primary text-white rounded-full py-4 font-bold text-[1.05rem] flex items-center justify-center gap-2 transition-all mt-auto shadow-xl shadow-primary/25 shrink-0 hover:scale-[1.02]">
+                {isAr ? 'التالي' : 'Next'} {isAr ? <ChevronLeft size={22} /> : <ChevronRight size={22} />}
               </button>
             </motion.div>
           )}
 
           {step === 1 && (
             <motion.div key="step1" variants={slideVariants} initial="initial" animate="animate" exit="exit" className="h-full flex flex-col">
-              <div className="flex flex-col md:flex-row md:justify-between items-start mb-6 gap-4">
-                <div>
-                  <h3 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">{isAr ? 'تفاصيل الحجز' : 'Booking Details'}</h3>
-                  <p className="text-slate-500">{isAr ? 'يرجى إدخال تفاصيل الموعد والمكان.' : 'Please enter appointment and location details.'}</p>
+              {(!authUser && !profile) ? (
+                <div className="flex-1 flex flex-col items-center justify-center text-center py-12">
+                  <div className="w-20 h-20 bg-primary/10 text-primary rounded-full flex items-center justify-center mb-6">
+                    <ShieldCheck size={40} />
+                  </div>
+                  <h3 className="text-2xl font-bold text-slate-900 dark:text-white mb-3">
+                    {isAr ? 'يجب تسجيل الدخول أولاً' : 'Login Required'}
+                  </h3>
+                  <p className="text-slate-500 mb-8 max-w-sm">
+                    {isAr 
+                      ? 'لإتمام عملية الحجز وتأكيد طلبك، يرجى تسجيل الدخول أو إنشاء حساب جديد لدينا.' 
+                      : 'To complete your booking and confirm your request, please log in or create a new account.'}
+                  </p>
+                  <div className="flex flex-col sm:flex-row w-full gap-4 max-w-sm mt-4">
+                    <Link to="/login" className="flex-1 bg-gradient-to-r from-primary to-accent text-white rounded-full py-4 font-bold text-lg transition-all shadow-xl shadow-primary/25 flex items-center justify-center hover:scale-[1.02]">
+                      {isAr ? 'تسجيل الدخول' : 'Login'}
+                    </Link>
+                    <Link to="/signup" className="flex-1 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-800 dark:text-white border-2 border-transparent dark:border-slate-700 rounded-full py-4 font-bold text-lg transition-all flex items-center justify-center shadow-sm hover:scale-[1.02]">
+                      {isAr ? 'إنشاء حساب جديد' : 'Create Account'}
+                    </Link>
+                  </div>
+                  {requiresDeviceSelection && !hasUrlSelection && (
+                    <button onClick={() => setStep(0)} className="mt-8 text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 font-semibold text-sm">
+                      {isAr ? 'العودة لاختيار الجهاز' : 'Back to device selection'}
+                    </button>
+                  )}
                 </div>
-                {finalPrice > 0 && (
-                  <div className="bg-slate-50 dark:bg-slate-800/50 p-4 rounded-2xl border border-slate-100 dark:border-slate-700 min-w-[240px] w-full md:w-auto shrink-0 shadow-sm">
-                    {selectedInstallationPrice > 0 ? (
-                      <>
-                        <div className="flex justify-between items-center mb-2 pb-2 border-b border-slate-200 dark:border-slate-700/50">
-                          <span className="text-sm text-slate-500">{isAr ? 'سعر الجهاز' : 'Device Price'}</span>
-                          <span className="font-semibold text-slate-700 dark:text-slate-300">
-                            {new Intl.NumberFormat('en-EG', { style: 'currency', currency: 'EGP' }).format(selectedDevicePrice)}
-                          </span>
-                        </div>
-                        <div className="flex justify-between items-center mb-3 pb-2 border-b border-slate-200 dark:border-slate-700/50">
-                          <span className="text-sm text-slate-500">{isAr ? 'سعر التركيب' : 'Installation'}</span>
-                          <span className="font-semibold text-slate-700 dark:text-slate-300">
-                            {new Intl.NumberFormat('en-EG', { style: 'currency', currency: 'EGP' }).format(selectedInstallationPrice)}
-                          </span>
-                        </div>
-                        <div className="flex justify-between items-center">
-                          <span className="text-sm font-bold text-slate-900 dark:text-white">{isAr ? 'الإجمالي' : 'Total'}</span>
-                          <span className="font-black text-primary text-lg">{formattedPrice}</span>
-                        </div>
-                      </>
-                    ) : (
-                      <div className="flex justify-between items-center">
-                        <span className="text-sm font-bold text-slate-900 dark:text-white">{isAr ? 'الإجمالي' : 'Total'}</span>
-                        <span className="font-black text-primary text-xl">{formattedPrice}</span>
+              ) : (
+                <>
+                  <div className="flex flex-col md:flex-row md:justify-between items-start mb-6 gap-4">
+                    <div>
+                      <h3 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">{isAr ? 'تفاصيل الحجز' : 'Booking Details'}</h3>
+                      <p className="text-slate-500">{isAr ? 'يرجى إدخال تفاصيل الموعد والمكان.' : 'Please enter appointment and location details.'}</p>
+                    </div>
+                    {finalPrice > 0 && (
+                      <div className="bg-slate-50 dark:bg-slate-800/50 p-4 rounded-2xl border border-slate-100 dark:border-slate-700 min-w-[240px] w-full md:w-auto shrink-0 shadow-sm">
+                        {selectedInstallationPrice > 0 ? (
+                          <>
+                            <div className="flex justify-between items-center mb-2 pb-2 border-b border-slate-200 dark:border-slate-700/50">
+                              <span className="text-sm text-slate-500">{isAr ? 'سعر الجهاز' : 'Device Price'}</span>
+                              <span className="font-semibold text-slate-700 dark:text-slate-300">
+                                {new Intl.NumberFormat('en-EG', { style: 'currency', currency: 'EGP' }).format(selectedDevicePrice)}
+                              </span>
+                            </div>
+                            <div className="flex justify-between items-center mb-3 pb-2 border-b border-slate-200 dark:border-slate-700/50">
+                              <span className="text-sm text-slate-500">{isAr ? 'سعر التركيب' : 'Installation'}</span>
+                              <span className="font-semibold text-slate-700 dark:text-slate-300">
+                                {new Intl.NumberFormat('en-EG', { style: 'currency', currency: 'EGP' }).format(selectedInstallationPrice)}
+                              </span>
+                            </div>
+                            <div className="flex justify-between items-center">
+                              <span className="text-sm font-bold text-slate-900 dark:text-white">{isAr ? 'الإجمالي' : 'Total'}</span>
+                              <span className="font-black text-primary text-lg">{formattedPrice}</span>
+                            </div>
+                          </>
+                        ) : (
+                          <div className="flex justify-between items-center">
+                            <span className="text-sm font-bold text-slate-900 dark:text-white">{isAr ? 'الإجمالي' : 'Total'}</span>
+                            <span className="font-black text-primary text-xl">{formattedPrice}</span>
+                          </div>
+                        )}
                       </div>
                     )}
                   </div>
-                )}
-              </div>
-              {formError && <div className="text-red-500 text-sm mb-4 font-bold">{formError}</div>}
-              <div className="space-y-5 flex-1">
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">{isAr ? 'رقم الهاتف' : 'Phone Number'}</label>
-                  <div className="relative">
-                    <Phone className={`absolute top-1/2 -translate-y-1/2 ${isAr ? 'right-4' : 'left-4'} text-slate-400`} size={20} />
-                    <input type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="01xxxxxxxxx" maxLength="11" className={`w-full bg-slate-50 dark:bg-midnight-lighter border border-slate-200 dark:border-slate-700 rounded-xl py-3.5 ${isAr ? 'pr-12 pl-4' : 'pl-12 pr-4'} text-slate-900 dark:text-white focus:ring-2 focus:ring-primary outline-none transition-shadow`} />
+                  {formError && <div className="text-red-500 text-sm mb-4 font-bold">{formError}</div>}
+                  <div className="space-y-5 flex-1">
+                    <div>
+                      <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">{isAr ? 'رقم الهاتف' : 'Phone Number'}</label>
+                      <div className="relative">
+                        <Phone className={`absolute top-1/2 -translate-y-1/2 ${isAr ? 'right-4' : 'left-4'} text-slate-400`} size={20} />
+                        <input type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="01xxxxxxxxx" maxLength="11" className={`w-full bg-slate-50 dark:bg-midnight-lighter border border-slate-200 dark:border-slate-700 rounded-xl py-3.5 ${isAr ? 'pr-12 pl-4' : 'pl-12 pr-4'} text-slate-900 dark:text-white focus:ring-2 focus:ring-primary outline-none transition-shadow`} />
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">{isAr ? 'التاريخ' : 'Date'}</label>
+                      <div className="relative">
+                        <Calendar className={`absolute top-1/2 -translate-y-1/2 ${isAr ? 'right-4' : 'left-4'} text-slate-400 pointer-events-none`} size={20} />
+                        <input type="date" value={date} onChange={(e) => setDate(e.target.value)} className={`w-full bg-slate-50 dark:bg-midnight-lighter border border-slate-200 dark:border-slate-700 rounded-xl py-3.5 ${isAr ? 'pr-12 pl-4' : 'pl-12 pr-4'} text-slate-900 dark:text-white focus:ring-2 focus:ring-primary outline-none transition-shadow`} />
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">{isAr ? 'العنوان بالتفصيل' : 'Detailed Address'}</label>
+                      <div className="relative">
+                        <MapPin className={`absolute top-4 ${isAr ? 'right-4' : 'left-4'} text-slate-400`} size={20} />
+                        <textarea rows="3" value={address} onChange={(e) => setAddress(e.target.value)} className={`w-full bg-slate-50 dark:bg-midnight-lighter border border-slate-200 dark:border-slate-700 rounded-xl py-3.5 ${isAr ? 'pr-12 pl-4' : 'pl-12 pr-4'} text-slate-900 dark:text-white focus:ring-2 focus:ring-primary outline-none transition-shadow resize-none placeholder-slate-400`} placeholder={isAr ? 'اكتب عنوانك هنا...' : 'Enter your address here...'}></textarea>
+                      </div>
+                    </div>
                   </div>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">{isAr ? 'التاريخ' : 'Date'}</label>
-                  <div className="relative">
-                    <Calendar className={`absolute top-1/2 -translate-y-1/2 ${isAr ? 'right-4' : 'left-4'} text-slate-400 pointer-events-none`} size={20} />
-                    <input type="date" value={date} onChange={(e) => setDate(e.target.value)} className={`w-full bg-slate-50 dark:bg-midnight-lighter border border-slate-200 dark:border-slate-700 rounded-xl py-3.5 ${isAr ? 'pr-12 pl-4' : 'pl-12 pr-4'} text-slate-900 dark:text-white focus:ring-2 focus:ring-primary outline-none transition-shadow`} />
+                  <div className="flex gap-4 mt-auto pt-6 shrink-0">
+                    {requiresDeviceSelection && !hasUrlSelection && (
+                      <button onClick={() => setStep(0)} className="w-1/3 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-full py-4 font-bold text-[1.05rem] flex items-center justify-center gap-2 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors shadow-sm">
+                        {isAr ? 'رجوع' : 'Back'}
+                      </button>
+                    )}
+                    <button onClick={nextStep} className={`${requiresDeviceSelection && !hasUrlSelection ? 'w-2/3' : 'w-full'} bg-gradient-to-r from-primary to-accent hover:from-primary-dark hover:to-primary text-white rounded-full py-4 font-bold text-[1.05rem] flex items-center justify-center gap-2 transition-all shadow-xl shadow-primary/25 hover:scale-[1.02]`}>
+                      {isAr ? 'التالي' : 'Next'} {isAr ? <ChevronLeft size={22} /> : <ChevronRight size={22} />}
+                    </button>
                   </div>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">{isAr ? 'العنوان بالتفصيل' : 'Detailed Address'}</label>
-                  <div className="relative">
-                    <MapPin className={`absolute top-4 ${isAr ? 'right-4' : 'left-4'} text-slate-400`} size={20} />
-                    <textarea rows="3" value={address} onChange={(e) => setAddress(e.target.value)} className={`w-full bg-slate-50 dark:bg-midnight-lighter border border-slate-200 dark:border-slate-700 rounded-xl py-3.5 ${isAr ? 'pr-12 pl-4' : 'pl-12 pr-4'} text-slate-900 dark:text-white focus:ring-2 focus:ring-primary outline-none transition-shadow resize-none placeholder-slate-400`} placeholder={isAr ? 'اكتب عنوانك هنا...' : 'Enter your address here...'}></textarea>
-                  </div>
-                </div>
-              </div>
-              <div className="flex gap-4 mt-auto pt-4 shrink-0">
-                {requiresDeviceSelection && !hasUrlSelection && (
-                  <button onClick={() => setStep(0)} className="w-1/3 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-xl py-4 font-bold flex items-center justify-center gap-2 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors">
-                    {isAr ? 'رجوع' : 'Back'}
-                  </button>
-                )}
-                <button onClick={nextStep} className={`${requiresDeviceSelection && !hasUrlSelection ? 'w-2/3' : 'w-full'} bg-primary hover:bg-primary-dark text-white rounded-xl py-4 font-bold flex items-center justify-center gap-2 transition-colors shadow-lg shadow-primary/20`}>
-                  {isAr ? 'التالي' : 'Next'} {isAr ? <ChevronLeft size={20} /> : <ChevronRight size={20} />}
-                </button>
-              </div>
+                </>
+              )}
             </motion.div>
           )}
 
@@ -456,16 +496,16 @@ export default function SmartPaymentSystem({ isAr, optionTitle, basePrice = 0, r
                 </label>
               </div>
               
-              <div className="flex gap-4 mt-auto pt-4 shrink-0">
-                <button onClick={prevStep} disabled={loading} className="w-1/3 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-xl py-4 font-bold flex items-center justify-center gap-2 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors">
+              <div className="flex gap-4 mt-auto pt-6 shrink-0">
+                <button onClick={prevStep} disabled={loading} className="w-1/3 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-full py-4 font-bold text-[1.05rem] flex items-center justify-center gap-2 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors shadow-sm">
                   {isAr ? 'رجوع' : 'Back'}
                 </button>
                 <button 
                   onClick={handleContinuePayment} 
                   disabled={!paymentMethod || loading}
-                  className={`w-2/3 text-white rounded-xl py-4 font-bold flex items-center justify-center gap-2 transition-colors shadow-lg ${paymentMethod ? 'bg-primary hover:bg-primary-dark shadow-primary/20' : 'bg-slate-300 dark:bg-slate-700 cursor-not-allowed'}`}
+                  className={`w-2/3 text-white rounded-full py-4 font-bold text-[1.05rem] flex items-center justify-center gap-2 transition-all shadow-xl hover:scale-[1.02] ${paymentMethod ? 'bg-gradient-to-r from-primary to-accent hover:from-primary-dark hover:to-primary shadow-primary/25' : 'bg-slate-300 dark:bg-slate-700 cursor-not-allowed'}`}
                 >
-                  {loading ? <Loader2 className="animate-spin" /> : (isAr ? 'متابعة' : 'Continue')} {isAr ? <ChevronLeft size={20} /> : <ChevronRight size={20} />}
+                  {loading ? <Loader2 className="animate-spin" /> : (isAr ? 'متابعة' : 'Continue')} {isAr ? <ChevronLeft size={22} /> : <ChevronRight size={22} />}
                 </button>
               </div>
             </motion.div>
@@ -525,10 +565,10 @@ export default function SmartPaymentSystem({ isAr, optionTitle, basePrice = 0, r
                   </div>
 
                   <div className="flex gap-4 mt-6 shrink-0">
-                    <button onClick={prevStep} disabled={loading} className="w-1/3 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-xl py-4 font-bold flex items-center justify-center hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors">
+                    <button onClick={prevStep} disabled={loading} className="w-1/3 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-full py-4 font-bold text-[1.05rem] flex items-center justify-center hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors shadow-sm">
                       {isAr ? 'رجوع' : 'Back'}
                     </button>
-                    <button onClick={submitBooking} disabled={loading || !paymentScreenshot} className={`w-2/3 text-white rounded-xl py-4 font-bold flex items-center justify-center gap-2 transition-colors shadow-lg ${paymentScreenshot ? 'bg-primary hover:bg-primary-dark shadow-primary/20' : 'bg-slate-300 dark:bg-slate-700 cursor-not-allowed'}`}>
+                    <button onClick={submitBooking} disabled={loading || !paymentScreenshot} className={`w-2/3 text-white rounded-full py-4 font-bold text-[1.05rem] flex items-center justify-center gap-2 transition-all shadow-xl hover:scale-[1.02] ${paymentScreenshot ? 'bg-gradient-to-r from-primary to-accent hover:from-primary-dark hover:to-primary shadow-primary/25' : 'bg-slate-300 dark:bg-slate-700 cursor-not-allowed'}`}>
                       {loading ? <Loader2 className="animate-spin" /> : (isAr ? 'تأكيد التحويل والحجز' : 'Confirm Transfer & Book')}
                     </button>
                   </div>
@@ -541,10 +581,10 @@ export default function SmartPaymentSystem({ isAr, optionTitle, basePrice = 0, r
                    <h3 className="text-2xl font-bold text-slate-900 dark:text-white mb-4">{isAr ? 'تأكيد الدفع عند الاستلام' : 'Confirm Cash on Delivery'}</h3>
                    <p className="text-slate-500 mb-8 max-w-sm mx-auto">{isAr ? `سيتم تحصيل مبلغ ${formattedPrice} نقداً بواسطة المهندس المختص عند إتمام الخدمة بنجاح.` : `Amount of ${formattedPrice} will be collected in cash by our engineer upon successful completion.`}</p>
                    <div className="flex gap-4 w-full mt-auto shrink-0">
-                      <button onClick={prevStep} disabled={loading} className="w-1/3 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-xl py-4 font-bold flex items-center justify-center hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors">
+                      <button onClick={prevStep} disabled={loading} className="w-1/3 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-full py-4 font-bold text-[1.05rem] flex items-center justify-center hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors shadow-sm">
                         {isAr ? 'رجوع' : 'Back'}
                       </button>
-                      <button onClick={handleCashSubmit} disabled={loading} className="w-2/3 bg-green-500 hover:bg-green-600 text-white rounded-xl py-4 font-bold flex items-center justify-center gap-2 transition-colors shadow-lg shadow-green-500/20">
+                      <button onClick={handleCashSubmit} disabled={loading} className="w-2/3 bg-green-500 hover:bg-green-600 text-white rounded-full py-4 font-bold text-[1.05rem] flex items-center justify-center gap-2 transition-all shadow-xl shadow-green-500/25 hover:scale-[1.02]">
                         {loading ? <Loader2 className="animate-spin" /> : (isAr ? 'تأكيد الحجز' : 'Confirm Booking')}
                       </button>
                     </div>

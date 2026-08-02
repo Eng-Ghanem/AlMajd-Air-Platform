@@ -1,11 +1,15 @@
 import React, { useState } from 'react';
-import { Send, Loader2 } from 'lucide-react';
+import { Send, Loader2, ShieldCheck } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
+import { supabase } from '../lib/supabase';
 
 export default function ContactForm({ lang }) {
   const isAr = lang === 'ar';
   const navigate = useNavigate();
+  const { profile, user: authUser } = useAuth();
+  const isGuest = !authUser && !profile;
   const [formData, setFormData] = useState({
     name: '',
     phone: '',
@@ -18,17 +22,20 @@ export default function ContactForm({ lang }) {
   const [success, setSuccess] = useState(false);
 
   React.useEffect(() => {
-    fetch(`http://${window.location.hostname}:5000/api/device-prices`)
-      .then(res => res.json())
-      .then(data => {
-        const pricesMap = {};
         data.forEach(item => {
-          pricesMap[item.id] = {
-            price: Number(item.price),
-            discount: Number(item.discount_percentage || 0)
-          };
-        });
-        setPrices(pricesMap);
+    supabase.from('device_prices').select('*')
+      .then(({ data, error }) => {
+        if (error) throw error;
+        if (data) {
+          const pricesMap = {};
+          data.forEach(item => {
+            pricesMap[item.id] = {
+              price: Number(item.price),
+              discount: Number(item.discount_percentage || 0)
+            };
+          });
+          setPrices(pricesMap);
+        }
       })
       .catch(err => console.error('Failed to fetch prices:', err));
   }, []);
@@ -81,14 +88,38 @@ export default function ContactForm({ lang }) {
         {isAr ? 'نموذج طلب خدمة' : 'Service Request Form'}
       </h3>
       
-      {success ? (
-        <div className="bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400 p-4 rounded-xl text-center font-bold mb-6">
-          {isAr ? 'تم إرسال طلبك بنجاح! سنتواصل معك قريباً.' : 'Request sent successfully! We will contact you soon.'}
+      {isGuest ? (
+        <div className="flex-1 flex flex-col items-center justify-center text-center py-8">
+          <div className="w-20 h-20 bg-primary/10 text-primary rounded-full flex items-center justify-center mb-6">
+            <ShieldCheck size={40} />
+          </div>
+          <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-3">
+            {isAr ? 'يجب تسجيل الدخول أولاً' : 'Login Required'}
+          </h3>
+          <p className="text-slate-500 mb-8 max-w-sm text-sm">
+            {isAr 
+              ? 'لإرسال طلب خدمة، يرجى تسجيل الدخول أو إنشاء حساب جديد لدينا.' 
+              : 'To submit a service request, please log in or create a new account.'}
+          </p>
+          <div className="flex flex-col sm:flex-row w-full gap-4 max-w-sm mx-auto mt-4">
+            <Link to="/login" className="flex-1 bg-gradient-to-r from-primary to-accent text-white rounded-full py-4 font-bold text-lg transition-all shadow-xl shadow-primary/25 flex items-center justify-center hover:scale-[1.02]">
+              {isAr ? 'تسجيل الدخول' : 'Login'}
+            </Link>
+            <Link to="/signup" className="flex-1 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-800 dark:text-white border-2 border-transparent dark:border-slate-700 rounded-full py-4 font-bold text-lg transition-all flex items-center justify-center shadow-sm hover:scale-[1.02]">
+              {isAr ? 'إنشاء حساب جديد' : 'Create Account'}
+            </Link>
+          </div>
         </div>
-      ) : null}
+      ) : (
+        <>
+          {success ? (
+            <div className="bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400 p-4 rounded-xl text-center font-bold mb-6">
+              {isAr ? 'تم إرسال طلبك بنجاح! سنتواصل معك قريباً.' : 'Request sent successfully! We will contact you soon.'}
+            </div>
+          ) : null}
 
-      <form onSubmit={handleSubmit} className="space-y-5">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+          <form onSubmit={handleSubmit} className="space-y-5">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
           <div>
             <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">
               {isAr ? 'الاسم بالكامل' : 'Full Name'}
@@ -188,7 +219,7 @@ export default function ContactForm({ lang }) {
         <button
           type="submit"
           disabled={loading}
-          className="w-full flex justify-center items-center gap-2 py-4 px-6 rounded-xl shadow-md text-lg font-bold text-white bg-gradient-to-r from-primary to-accent hover:scale-[1.02] transition-transform focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-70 disabled:scale-100"
+          className="w-full flex justify-center items-center gap-2 py-4 px-6 rounded-full shadow-xl shadow-primary/25 text-lg font-bold text-white bg-gradient-to-r from-primary to-accent hover:from-primary-dark hover:to-primary hover:scale-[1.02] transition-all disabled:opacity-70 disabled:scale-100"
         >
           {loading ? <Loader2 className="animate-spin h-6 w-6" /> : (
             <>
@@ -197,7 +228,9 @@ export default function ContactForm({ lang }) {
             </>
           )}
         </button>
-      </form>
+          </form>
+        </>
+      )}
     </motion.div>
   );
 }

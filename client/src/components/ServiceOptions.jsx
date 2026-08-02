@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { PackageCheck, Home, Wrench, X, Settings2, ShieldCheck, Wind, Droplets } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
-export default function ServiceOptions({ lang }) {
+export default function ServiceOptions({ lang, titleAr, titleEn, subtitleAr, subtitleEn }) {
   const isAr = lang === 'ar';
   const navigate = useNavigate();
   const [showMaintenanceModal, setShowMaintenanceModal] = useState(false);
@@ -71,7 +71,7 @@ export default function ServiceOptions({ lang }) {
             viewport={{ once: true, amount: 0.5 }}
             className="text-4xl sm:text-5xl font-black text-slate-900 dark:text-white mb-6 tracking-tight"
           >
-            {isAr ? 'طرق الخدمة' : 'Service Options'}
+            {isAr ? (titleAr || 'طرق الخدمة') : (titleEn || 'Service Options')}
           </motion.h2>
           <motion.p 
             initial={{ opacity: 0, y: 20 }}
@@ -80,8 +80,8 @@ export default function ServiceOptions({ lang }) {
             className="text-xl text-slate-500 dark:text-slate-400 max-w-2xl mx-auto font-light"
           >
             {isAr 
-              ? 'اختر الطريقة التي تناسب احتياجاتك من بين خياراتنا المتعددة والمريحة.' 
-              : 'Choose the method that fits your needs from our multiple and convenient options.'}
+              ? (subtitleAr || 'اختر الطريقة التي تناسب احتياجاتك من بين خياراتنا المتعددة والمريحة.') 
+              : (subtitleEn || 'Choose the method that fits your needs from our multiple and convenient options.')}
           </motion.p>
         </div>
 

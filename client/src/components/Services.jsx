@@ -5,7 +5,7 @@ import { Wrench, Wind, Snowflake, Droplets } from 'lucide-react';
 
 const MotionLink = motion(Link);
 
-export default function Services({ lang }) {
+export default function Services({ lang, hideTitle = false, titleAr, titleEn, subtitleAr, subtitleEn }) {
   const isAr = lang === 'ar';
 
   const services = [
@@ -68,26 +68,28 @@ export default function Services({ lang }) {
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-primary/5 dark:bg-primary/10 rounded-full blur-[120px] -z-10 pointer-events-none"></div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center mb-20">
-          <motion.h2 
-            initial={{ opacity: 0, y: -20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, amount: 0.5 }}
-            className="text-4xl sm:text-5xl font-black text-slate-900 dark:text-white mb-6 tracking-tight"
-          >
-            {isAr ? 'خدماتنا المميزة' : 'Our Premium Services'}
-          </motion.h2>
-          <motion.p 
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, amount: 0.5 }}
-            className="text-xl text-slate-500 dark:text-slate-400 max-w-2xl mx-auto font-light"
-          >
-            {isAr 
-              ? 'نقدم مجموعة متكاملة من الحلول الذكية لصيانة وتركيب التكييفات بأعلى معايير الجودة.' 
-              : 'We offer a comprehensive suite of smart solutions for AC maintenance and installation with the highest quality standards.'}
-          </motion.p>
-        </div>
+        {!hideTitle && (
+          <div className="text-center mb-20">
+            <motion.h2 
+              initial={{ opacity: 0, y: -20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, amount: 0.5 }}
+              className="text-4xl sm:text-5xl font-black text-slate-900 dark:text-white mb-6 tracking-tight"
+            >
+              {isAr ? (titleAr || 'خدماتنا المميزة') : (titleEn || 'Our Premium Services')}
+            </motion.h2>
+            <motion.p 
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, amount: 0.5 }}
+              className="text-xl text-slate-500 dark:text-slate-400 max-w-2xl mx-auto font-light"
+            >
+              {isAr 
+                ? (subtitleAr || 'نقدم مجموعة متكاملة من الحلول الذكية لصيانة وتركيب التكييفات بأعلى معايير الجودة.') 
+                : (subtitleEn || 'We offer a comprehensive suite of smart solutions for AC maintenance and installation with the highest quality standards.')}
+            </motion.p>
+          </div>
+        )}
 
         <motion.div 
           variants={containerVariants}
