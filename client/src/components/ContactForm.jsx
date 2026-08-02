@@ -22,7 +22,6 @@ export default function ContactForm({ lang }) {
   const [success, setSuccess] = useState(false);
 
   React.useEffect(() => {
-        data.forEach(item => {
     supabase.from('device_prices').select('*')
       .then(({ data, error }) => {
         if (error) throw error;
