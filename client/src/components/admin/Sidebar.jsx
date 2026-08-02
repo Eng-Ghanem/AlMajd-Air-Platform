@@ -4,7 +4,7 @@ import { LayoutDashboard, FileText, CreditCard, Users, Settings, LogOut, Package
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 
-export default function Sidebar({ isAr, currentView, setCurrentView }) {
+export default function Sidebar({ isAr, currentView, setCurrentView, isMobile }) {
   const navigate = useNavigate();
   const { logout } = useAuth();
 
@@ -24,7 +24,7 @@ export default function Sidebar({ isAr, currentView, setCurrentView }) {
   };
 
   return (
-    <aside className="w-64 h-screen hidden lg:flex flex-col bg-white dark:bg-midnight-lighter border-l dark:border-l-slate-800 border-r dark:border-r-slate-800 border-slate-200 sticky top-0 transition-colors">
+    <aside className={`w-64 h-screen flex flex-col bg-white dark:bg-midnight-lighter border-l dark:border-l-slate-800 border-r dark:border-r-slate-800 border-slate-200 sticky top-0 transition-colors ${isMobile ? '' : 'hidden lg:flex'}`}>
       <div className="p-6 flex items-center justify-center border-b border-slate-100 dark:border-slate-800">
         <Link to="/" className="flex items-center gap-2">
            <div className="w-10 h-10 bg-primary text-white rounded-xl flex items-center justify-center font-black text-xl shadow-lg shadow-primary/20">M</div>

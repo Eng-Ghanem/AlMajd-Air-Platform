@@ -96,7 +96,7 @@ export default function AdminDashboard({ lang, setLang, theme, setTheme }) {
               initial={{ x: isAr ? '100%' : '-100%' }} animate={{ x: 0 }} exit={{ x: isAr ? '100%' : '-100%' }} transition={{ type: 'spring', damping: 25, stiffness: 200 }}
               className={`fixed top-0 bottom-0 ${isAr ? 'right-0' : 'left-0'} z-40 lg:hidden`}
             >
-              <Sidebar isAr={isAr} currentView={currentView} setCurrentView={(view) => { setCurrentView(view); setMobileMenuOpen(false); }} />
+              <Sidebar isMobile={true} isAr={isAr} currentView={currentView} setCurrentView={(view) => { setCurrentView(view); setMobileMenuOpen(false); }} />
             </motion.div>
           </>
         )}
