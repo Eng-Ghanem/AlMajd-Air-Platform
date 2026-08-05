@@ -17,11 +17,20 @@ export default function TechnicianPage({ lang }) {
   const [newRequest, setNewRequest] = useState({ 
     name: '', 
     phone: '', 
-    serviceType: isAr ? 'تأسيس وتركيب' : 'Installation', 
+    serviceType: lang === 'ar' ? 'تأسيس وتركيب' : 'Installation', 
     date: '', 
     totalPrice: '', 
     message: '' 
   });
+
+  useEffect(() => {
+    setNewRequest(prev => ({
+      ...prev,
+      serviceType: lang === 'ar' ? 
+        (prev.serviceType === 'Installation' ? 'تأسيس وتركيب' : prev.serviceType) : 
+        (prev.serviceType === 'تأسيس وتركيب' ? 'Installation' : prev.serviceType)
+    }));
+  }, [lang]);
 
   const fetchRequests = async () => {
     try {
@@ -195,7 +204,7 @@ export default function TechnicianPage({ lang }) {
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     className={`w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl py-3 ${isAr ? 'pr-12 pl-4' : 'pl-12 pr-4'} text-slate-900 dark:text-white focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all text-sm`}
-                    placeholder={isAr ? 'بحث برقم الهاتف أو الاسم...' : 'Search by name or phone...'}
+                    placeholder={isAr ? 'بحث' : 'Search'}
                   />
                 </div>
               </div>

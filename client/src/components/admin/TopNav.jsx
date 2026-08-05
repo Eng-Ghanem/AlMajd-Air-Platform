@@ -65,7 +65,7 @@ export default function TopNav({ isAr, lang, setLang, theme, setTheme, setMobile
           <Search className={`absolute top-1/2 -translate-y-1/2 ${isAr ? 'right-4' : 'left-4'} text-slate-400`} size={20} />
           <input 
             type="text" 
-            placeholder={isAr ? 'بحث عن طلب، عميل...' : 'Search request, customer...'}
+            placeholder={isAr ? 'بحث' : 'Search'}
             className={`w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-full py-2.5 ${isAr ? 'pr-12 pl-4' : 'pl-12 pr-4'} text-slate-900 dark:text-white focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all`}
           />
         </div>
