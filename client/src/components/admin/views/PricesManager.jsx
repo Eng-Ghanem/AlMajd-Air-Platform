@@ -73,12 +73,12 @@ export default function PricesManager({ isAr }) {
   };
 
   const handlePriceChange = (id, newPrice) => {
-    setPricesData(prev => prev.map(p => p.id === id ? { ...p, price: Number(newPrice) } : p));
+    setPricesData(prev => prev.map(p => p.id === id ? { ...p, price: newPrice === '' ? '' : Number(newPrice) } : p));
     setSaveSuccess(false);
   };
 
   const handleDiscountChange = (id, newDiscount) => {
-    setPricesData(prev => prev.map(p => p.id === id ? { ...p, discount_percentage: Number(newDiscount) } : p));
+    setPricesData(prev => prev.map(p => p.id === id ? { ...p, discount_percentage: newDiscount === '' ? '' : Number(newDiscount) } : p));
     setSaveSuccess(false);
   };
 
@@ -86,7 +86,9 @@ export default function PricesManager({ isAr }) {
     try {
       setSaving(true);
       const pricesToSave = pricesData.map(({ id, price, discount_percentage }) => ({
-        id, price, discount_percentage
+        id, 
+        price: Number(price) || 0, 
+        discount_percentage: Number(discount_percentage) || 0
       }));
       
       const { error } = await supabase.from('device_prices').upsert(pricesToSave, { onConflict: 'id' });
@@ -219,7 +221,9 @@ export default function PricesManager({ isAr }) {
                 <td colSpan="4" className="text-center py-12 text-slate-500">{isAr ? 'لا يوجد أجهزة' : 'No devices found'}</td>
               </tr>
             ) : filteredData.map((device) => {
-              const finalPrice = device.price - (device.price * (device.discount_percentage / 100));
+              const safePrice = Number(device.price) || 0;
+              const safeDiscount = Number(device.discount_percentage) || 0;
+              const finalPrice = safePrice - (safePrice * (safeDiscount / 100));
               
               return (
                 <tr key={device.id} className="border-b border-slate-50 dark:border-slate-800/50 hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors group">
@@ -233,7 +237,7 @@ export default function PricesManager({ isAr }) {
                       <input 
                         type="number"
                         min="0"
-                        value={device.price}
+                        value={device.price === 0 ? '' : device.price}
                         onChange={(e) => handlePriceChange(device.id, e.target.value)}
                         className={`w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg py-2 ${isAr ? 'pr-8 pl-3' : 'pl-8 pr-3'} text-slate-900 dark:text-white focus:outline-none focus:border-primary font-bold`}
                       />
@@ -246,7 +250,7 @@ export default function PricesManager({ isAr }) {
                         type="number"
                         min="0"
                         max="100"
-                        value={device.discount_percentage}
+                        value={device.discount_percentage === 0 ? '' : device.discount_percentage}
                         onChange={(e) => handleDiscountChange(device.id, e.target.value)}
                         className={`w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg py-2 ${isAr ? 'pr-8 pl-3' : 'pl-8 pr-3'} text-slate-900 dark:text-white focus:outline-none focus:border-primary font-bold`}
                       />

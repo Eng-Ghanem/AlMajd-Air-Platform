@@ -12,17 +12,23 @@ export default function RequestsTable({ isAr, requests, loading, fetchRequests, 
   const [enlargedImage, setEnlargedImage] = useState(null);
   const [zoomLevel, setZoomLevel] = useState(1);
 
+  const [localRequests, setLocalRequests] = useState([]);
+
   useEffect(() => {
-    if (openRequestId && requests.length > 0) {
-      const req = requests.find(r => r.id === openRequestId);
+    setLocalRequests(requests);
+  }, [requests]);
+
+  useEffect(() => {
+    if (openRequestId && localRequests.length > 0) {
+      const req = localRequests.find(r => r.id === openRequestId);
       if (req) {
         setSelectedRequest(req);
       }
       if (setOpenRequestId) setOpenRequestId(null);
     }
-  }, [openRequestId, requests, setOpenRequestId]);
+  }, [openRequestId, localRequests, setOpenRequestId]);
 
-  const filteredRequests = requests.filter(req => {
+  const filteredRequests = localRequests.filter(req => {
     const matchesSearch = req.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
                           req.service_type.toLowerCase().includes(searchTerm.toLowerCase()) ||
                           req.id.toString().includes(searchTerm);
@@ -31,6 +37,12 @@ export default function RequestsTable({ isAr, requests, loading, fetchRequests, 
   });
 
   const handleUpdateStatus = async (id, newStatus) => {
+    // Optimistic UI Update
+    setLocalRequests(prev => prev.map(req => req.id === id ? { ...req, status: newStatus } : req));
+    if (selectedRequest && selectedRequest.id === id) {
+      setSelectedRequest(prev => ({ ...prev, status: newStatus }));
+    }
+
     try {
       const { error } = await supabase
         .from('service_requests')
@@ -38,13 +50,15 @@ export default function RequestsTable({ isAr, requests, loading, fetchRequests, 
         .eq('id', id);
         
       if (!error) {
+        // Fetch in background to sync other data if needed, but don't await it
         if (fetchRequests) fetchRequests();
-        setSelectedRequest(prev => ({ ...prev, status: newStatus }));
       } else {
         throw error;
       }
     } catch (error) {
       console.error('Update status error:', error);
+      // Revert optimistic update on error
+      if (fetchRequests) fetchRequests();
       alert(isAr ? 'حدث خطأ في تحديث الحالة' : 'Error updating status');
     }
   };
