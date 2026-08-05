@@ -94,7 +94,7 @@ export default function Footer({ lang }) {
               <li className="flex items-center gap-3">
                 <Phone className="text-primary shrink-0" size={20} />
                 <span className="text-slate-500 dark:text-slate-400" dir="ltr">
-                  +20 100 269 1611
+                  01080925784
                 </span>
               </li>
               <li className="flex items-center gap-3">
@@ -113,10 +113,10 @@ export default function Footer({ lang }) {
             © {new Date().getFullYear()} {isAr ? 'المجد اير. جميع الحقوق محفوظة.' : 'AlMajd Air. All rights reserved.'}
           </p>
           <div className="flex gap-6 text-sm">
-            <Link to="#" className="text-slate-500 hover:text-primary transition-colors">
+            <Link to="/privacy-policy" className="text-slate-500 hover:text-primary transition-colors">
               {isAr ? 'سياسة الخصوصية' : 'Privacy Policy'}
             </Link>
-            <Link to="#" className="text-slate-500 hover:text-primary transition-colors">
+            <Link to="/terms" className="text-slate-500 hover:text-primary transition-colors">
               {isAr ? 'الشروط والأحكام' : 'Terms & Conditions'}
             </Link>
           </div>

@@ -98,18 +98,18 @@ export default function Services({ lang, hideTitle = false, titleAr, titleEn, su
           viewport={{ once: true, amount: 0.2 }}
           className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8"
         >
-          {services.map((service) => (
+          {services.map((service, index) => (
             <MotionLink
               to={`/service-options/${service.id}`}
               key={service.id}
               variants={cardVariants}
               whileHover={{ scale: 1.05 }}
-              className="group relative p-8 rounded-3xl bg-slate-50/50 dark:bg-midnight/50 backdrop-blur-2xl border border-white dark:border-slate-800 shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.1)] hover:shadow-[0_8px_30px_rgba(0,180,216,0.15)] dark:hover:shadow-[0_8px_30px_rgba(0,180,216,0.2)] transition-all duration-500 overflow-hidden"
+              className="group relative p-8 rounded-3xl bg-slate-50/50 dark:bg-midnight/50 backdrop-blur-2xl border border-white dark:border-slate-800 shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.1)] hover:shadow-[0_8px_30px_rgba(0,180,216,0.15)] dark:hover:shadow-[0_8px_30px_rgba(0,180,216,0.2)] transition-all duration-500 overflow-hidden block"
             >
               {/* Inner Glow Effect on Hover */}
               <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-accent/5 opacity-0 group-hover:opacity-100 rounded-3xl transition-opacity duration-500 pointer-events-none"></div>
               
-              <div className="mb-8 inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-white dark:bg-midnight-lighter border border-slate-100 dark:border-slate-800 shadow-sm group-hover:shadow-md transition-shadow duration-500 relative">
+              <div className="mb-8 relative z-10 inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-white dark:bg-midnight-lighter border border-slate-100 dark:border-slate-800 shadow-sm group-hover:shadow-md transition-shadow duration-500">
                  {/* Icon Background Glow */}
                 <div className="absolute inset-0 bg-accent/20 blur-2xl rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
                 <div className="relative z-10">
@@ -117,12 +117,17 @@ export default function Services({ lang, hideTitle = false, titleAr, titleEn, su
                 </div>
               </div>
               
-              <h3 className="text-2xl font-bold text-slate-900 dark:text-white mb-4 group-hover:text-primary dark:group-hover:text-accent transition-colors duration-500">
+              <h3 className="text-2xl font-bold text-slate-900 dark:text-white mb-4 group-hover:text-primary dark:group-hover:text-accent transition-colors duration-500 relative z-10">
                 {service.title}
               </h3>
-              <p className="text-slate-600 dark:text-slate-400 leading-relaxed font-light">
+              <p className="text-slate-600 dark:text-slate-400 leading-relaxed font-light relative z-10">
                 {service.description}
               </p>
+              
+              {/* Decorative Number */}
+              <div className="absolute bottom-4 right-8 opacity-5 text-8xl font-black text-slate-900 dark:text-white pointer-events-none select-none transition-opacity duration-500 group-hover:opacity-10">
+                0{index + 1}
+              </div>
             </MotionLink>
           ))}
         </motion.div>

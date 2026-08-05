@@ -218,7 +218,7 @@ export default function PaymentPage({ lang }) {
                 </div>
                 <div className="flex justify-between items-center bg-white dark:bg-midnight p-3 rounded-lg border border-slate-200 dark:border-slate-700">
                   <span className="text-sm text-slate-600 dark:text-slate-400">{isAr ? 'فودافون كاش:' : 'Vodafone Cash:'}</span>
-                  <span className="font-mono font-bold text-primary">01002691611</span>
+                  <span className="font-mono font-bold text-primary">01080925784</span>
                 </div>
                 <div className="flex justify-between items-center bg-white dark:bg-midnight p-3 rounded-lg border border-slate-200 dark:border-slate-700">
                   <span className="text-sm text-slate-600 dark:text-slate-400">{isAr ? 'إنستاباي (InstaPay):' : 'InstaPay:'}</span>

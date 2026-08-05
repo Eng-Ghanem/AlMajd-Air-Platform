@@ -545,11 +545,11 @@ export default function SmartPaymentSystem({ isAr, optionTitle, basePrice = 0, r
                     <div className="space-y-3">
                       <div className="flex flex-col items-center justify-center text-center bg-white dark:bg-midnight p-5 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm gap-3">
                         <span className="text-slate-600 dark:text-slate-400 font-bold">{isAr ? 'فودافون كاش:' : 'Vodafone Cash:'}</span>
-                        <span className="font-mono font-black text-xl text-primary bg-primary/5 px-4 py-2.5 rounded-xl border border-primary/10 w-full break-all" dir="ltr">010xxxxxxx</span>
+                        <span className="font-mono font-black text-xl text-primary bg-primary/5 px-4 py-2.5 rounded-xl border border-primary/10 w-full break-all" dir="ltr">01080925784</span>
                       </div>
                       <div className="flex flex-col items-center justify-center text-center bg-white dark:bg-midnight p-5 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm gap-3">
                         <span className="text-slate-600 dark:text-slate-400 font-bold">{isAr ? 'إنستاباي (InstaPay):' : 'InstaPay:'}</span>
-                        <span className="font-mono font-black text-xl text-primary bg-primary/5 px-4 py-2.5 rounded-xl border border-primary/10 w-full break-all" dir="ltr">almajdair@instapay</span>
+                        <span className="font-mono font-black text-xl text-primary bg-primary/5 px-4 py-2.5 rounded-xl border border-primary/10 w-full break-all" dir="ltr">01080925784</span>
                       </div>
                     </div>
                   </div>

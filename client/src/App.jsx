@@ -18,6 +18,8 @@ import PaymentPage from './pages/PaymentPage'
 import ProfilePage from './pages/ProfilePage'
 import AdminDashboard from './pages/AdminDashboard'
 import TechnicianPage from './pages/TechnicianPage'
+import PrivacyPolicyPage from './pages/PrivacyPolicyPage'
+import TermsPage from './pages/TermsPage'
 import { AuthProvider, useAuth } from './context/AuthContext'
 
 function AppRoutes({ lang, setLang, theme, setTheme }) {
@@ -56,6 +58,8 @@ function AppRoutes({ lang, setLang, theme, setTheme }) {
         <Route path="/payment" element={<PaymentPage lang={lang} />} />
         <Route path="/profile" element={user ? <ProfilePage lang={lang} /> : <LoginPage lang={lang} />} />
         <Route path="/technician" element={isTechnician || isAdmin ? <TechnicianPage lang={lang} /> : <Home lang={lang} />} />
+        <Route path="/privacy-policy" element={<PrivacyPolicyPage lang={lang} />} />
+        <Route path="/terms" element={<TermsPage lang={lang} />} />
         <Route path="*" element={<NotFoundPage lang={lang} />} />
       </Route>
       <Route path="/admin" element={isAdmin ? <AdminDashboard lang={lang} setLang={setLang} theme={theme} setTheme={setTheme} /> : <Home lang={lang} />} />

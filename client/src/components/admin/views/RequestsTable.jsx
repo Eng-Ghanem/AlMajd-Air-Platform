@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Search, Filter, MoreVertical, CheckCircle2, XCircle, Clock, X, MessageSquare, Phone, User, Calendar, Trash2 } from 'lucide-react';
+import { Search, Filter, MoreVertical, CheckCircle2, XCircle, Clock, X, MessageSquare, Phone, User, Calendar, Trash2, ZoomIn, ZoomOut } from 'lucide-react';
 import { supabase } from '../../../lib/supabase';
 
 export default function RequestsTable({ isAr, requests, loading, fetchRequests, openRequestId, setOpenRequestId }) {
@@ -9,6 +9,8 @@ export default function RequestsTable({ isAr, requests, loading, fetchRequests, 
   const [selectedRequest, setSelectedRequest] = useState(null);
   const [deleteConfirmId, setDeleteConfirmId] = useState(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [enlargedImage, setEnlargedImage] = useState(null);
+  const [zoomLevel, setZoomLevel] = useState(1);
 
   useEffect(() => {
     if (openRequestId && requests.length > 0) {
@@ -347,11 +349,8 @@ export default function RequestsTable({ isAr, requests, loading, fetchRequests, 
                                     alt="Payment Receipt" 
                                     className="max-w-full h-auto rounded-lg border border-slate-200 dark:border-slate-700 shadow-sm max-h-48 object-contain cursor-pointer hover:opacity-90 hover:scale-[1.02] transition-all" 
                                     onClick={() => {
-                                      const w = window.open('');
-                                      if (w) {
-                                        w.document.write(`<html style="background:#0f172a;display:flex;justify-content:center;align-items:center;height:100vh;margin:0;"><body style="margin:0;display:flex;justify-content:center;align-items:center;"><img src="${base64Image}" style="max-width:100%;max-height:100vh;object-fit:contain;border-radius:12px;box-shadow:0 10px 25px rgba(0,0,0,0.5);"/></body></html>`);
-                                        w.document.title = isAr ? 'إيصال الدفع' : 'Payment Receipt';
-                                      }
+                                      setEnlargedImage(base64Image);
+                                      setZoomLevel(1);
                                     }}
                                   />
                                   <p className="text-xs text-slate-400 mt-2 text-center">{isAr ? 'اضغط على الصورة لتكبيرها' : 'Click image to enlarge'}</p>
@@ -444,6 +443,77 @@ export default function RequestsTable({ isAr, requests, loading, fetchRequests, 
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Image Viewer Modal */}
+      <AnimatePresence>
+        {enlargedImage && (
+          <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/90 backdrop-blur-sm p-4">
+            {/* Controls */}
+            <div className="absolute top-6 right-6 z-10 flex items-center gap-4 bg-black/50 p-2 rounded-2xl backdrop-blur-md border border-white/10">
+              <button 
+                onClick={() => setZoomLevel(prev => Math.min(prev + 0.5, 4))}
+                className="p-2 text-white hover:bg-white/20 rounded-xl transition-colors"
+                title={isAr ? 'تكبير' : 'Zoom In'}
+              >
+                <ZoomIn size={24} />
+              </button>
+              <span className="text-white font-mono font-bold w-12 text-center">{Math.round(zoomLevel * 100)}%</span>
+              <button 
+                onClick={() => setZoomLevel(prev => Math.max(prev - 0.5, 0.5))}
+                className="p-2 text-white hover:bg-white/20 rounded-xl transition-colors"
+                title={isAr ? 'تصغير' : 'Zoom Out'}
+              >
+                <ZoomOut size={24} />
+              </button>
+              <div className="w-px h-6 bg-white/20 mx-2"></div>
+              <button 
+                onClick={() => {
+                  setEnlargedImage(null);
+                  setZoomLevel(1);
+                }}
+                className="p-2 text-white hover:bg-red-500/80 rounded-xl transition-colors"
+                title={isAr ? 'إغلاق' : 'Close'}
+              >
+                <X size={24} />
+              </button>
+            </div>
+
+            {/* Instruction for panning */}
+            {zoomLevel > 1 && (
+              <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-10 bg-black/50 text-white/80 px-4 py-2 rounded-full text-sm backdrop-blur-md border border-white/10">
+                {isAr ? 'يمكنك سحب الصورة للتنقل' : 'Drag to pan around'}
+              </div>
+            )}
+
+            {/* Image Container with Dragging */}
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.9 }}
+              className="relative w-full h-full flex items-center justify-center overflow-hidden"
+              onClick={(e) => {
+                // Close if clicking outside the image
+                if (e.target === e.currentTarget) {
+                  setEnlargedImage(null);
+                  setZoomLevel(1);
+                }
+              }}
+            >
+              <motion.img 
+                src={enlargedImage} 
+                alt="Enlarged Receipt" 
+                drag={zoomLevel > 1}
+                dragConstraints={{ left: -1000, right: 1000, top: -1000, bottom: 1000 }}
+                dragElastic={0.1}
+                style={{ scale: zoomLevel }}
+                className="max-w-full max-h-[90vh] object-contain rounded-lg cursor-grab active:cursor-grabbing"
+                transition={{ type: "spring", stiffness: 300, damping: 30 }}
+              />
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
     </>
   );
 }
