@@ -257,7 +257,7 @@ export default function SmartPaymentSystem({ isAr, optionTitle, basePrice = 0, r
   const formattedPrice = new Intl.NumberFormat('en-EG', { style: 'currency', currency: 'EGP' }).format(finalPrice);
 
   return (
-    <div className="bg-white/80 dark:bg-midnight/80 backdrop-blur-xl border border-slate-200/50 dark:border-slate-700/50 shadow-[0_30px_60px_-15px_rgba(0,180,216,0.15)] rounded-[2.5rem] p-5 sm:p-10 relative overflow-hidden h-[600px] sm:h-[650px] flex flex-col">
+    <div className="bg-white/80 dark:bg-midnight/80 backdrop-blur-xl border border-slate-200/50 dark:border-slate-700/50 shadow-[0_30px_60px_-15px_rgba(0,180,216,0.15)] rounded-[2.5rem] p-4 sm:p-10 relative overflow-hidden h-[600px] sm:h-[650px] flex flex-col">
       <div className="absolute -top-32 -right-32 w-64 h-64 bg-primary/20 rounded-full blur-[80px] pointer-events-none"></div>
       {step > 0 && (
         <div className="flex justify-between mb-8 relative z-10">
@@ -528,7 +528,7 @@ export default function SmartPaymentSystem({ isAr, optionTitle, basePrice = 0, r
                     </div>
                   </div>
                   
-                  <div className="bg-slate-50 dark:bg-midnight-lighter p-5 sm:p-6 rounded-2xl border border-slate-200 dark:border-slate-700 mb-6 space-y-4 shadow-sm">
+                  <div className="bg-slate-50 dark:bg-midnight-lighter p-4 sm:p-6 rounded-2xl border border-slate-200 dark:border-slate-700 mb-6 space-y-4 shadow-sm">
                     <p className="font-bold text-slate-900 dark:text-white mb-2">{isAr ? 'يرجى تحويل المبلغ إلى أحد الحسابات التالية:' : 'Please transfer the amount to one of the following accounts:'}</p>
                     
                     <div className="mb-5">
@@ -543,13 +543,13 @@ export default function SmartPaymentSystem({ isAr, optionTitle, basePrice = 0, r
                     </div>
 
                     <div className="space-y-3">
-                      <div className="flex flex-col items-center justify-center text-center bg-white dark:bg-midnight p-5 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm gap-3">
+                      <div className="flex flex-col items-center justify-center text-center bg-white dark:bg-midnight p-4 sm:p-5 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm gap-2 sm:gap-3">
                         <span className="text-slate-600 dark:text-slate-400 font-bold">{isAr ? 'فودافون كاش:' : 'Vodafone Cash:'}</span>
-                        <span className="font-mono font-black text-xl text-primary bg-primary/5 px-4 py-2.5 rounded-xl border border-primary/10 w-full break-all" dir="ltr">01080925784</span>
+                        <span className="font-mono font-black text-lg sm:text-xl text-primary bg-primary/5 px-2 sm:px-4 py-2.5 rounded-xl border border-primary/10 w-full whitespace-nowrap tracking-wider" dir="ltr">01080925784</span>
                       </div>
-                      <div className="flex flex-col items-center justify-center text-center bg-white dark:bg-midnight p-5 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm gap-3">
+                      <div className="flex flex-col items-center justify-center text-center bg-white dark:bg-midnight p-4 sm:p-5 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm gap-2 sm:gap-3">
                         <span className="text-slate-600 dark:text-slate-400 font-bold">{isAr ? 'إنستاباي (InstaPay):' : 'InstaPay:'}</span>
-                        <span className="font-mono font-black text-xl text-primary bg-primary/5 px-4 py-2.5 rounded-xl border border-primary/10 w-full break-all" dir="ltr">01080925784</span>
+                        <span className="font-mono font-black text-lg sm:text-xl text-primary bg-primary/5 px-2 sm:px-4 py-2.5 rounded-xl border border-primary/10 w-full whitespace-nowrap tracking-wider" dir="ltr">01080925784</span>
                       </div>
                     </div>
                   </div>
