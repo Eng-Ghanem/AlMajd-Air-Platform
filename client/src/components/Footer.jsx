@@ -64,17 +64,25 @@ export default function Footer({ lang }) {
               {isAr ? 'أهم الخدمات' : 'Top Services'}
             </h4>
             <ul className="space-y-4">
-              <li className="text-slate-500 dark:text-slate-400 cursor-pointer hover:text-primary dark:hover:text-accent transition-colors duration-300">
-                {isAr ? 'التأسيس والتركيب' : 'Installation & Setup'}
+              <li>
+                <Link to="/service-options/11" className="block text-slate-500 dark:text-slate-400 hover:text-primary dark:hover:text-accent transition-colors duration-300">
+                  {isAr ? 'التأسيس والتركيب' : 'Installation & Setup'}
+                </Link>
               </li>
-              <li className="text-slate-500 dark:text-slate-400 cursor-pointer hover:text-primary dark:hover:text-accent transition-colors duration-300">
-                {isAr ? 'الصيانة الدورية' : 'Regular Maintenance'}
+              <li>
+                <Link to="/service-options/12" className="block text-slate-500 dark:text-slate-400 hover:text-primary dark:hover:text-accent transition-colors duration-300">
+                  {isAr ? 'الصيانة الدورية' : 'Regular Maintenance'}
+                </Link>
               </li>
-              <li className="text-slate-500 dark:text-slate-400 cursor-pointer hover:text-primary dark:hover:text-accent transition-colors duration-300">
-                {isAr ? 'شحن الفريون' : 'Freon Charging'}
+              <li>
+                <Link to="/service-options/13" className="block text-slate-500 dark:text-slate-400 hover:text-primary dark:hover:text-accent transition-colors duration-300">
+                  {isAr ? 'شحن الفريون' : 'Freon Charging'}
+                </Link>
               </li>
-              <li className="text-slate-500 dark:text-slate-400 cursor-pointer hover:text-primary dark:hover:text-accent transition-colors duration-300">
-                {isAr ? 'تنظيف وغسيل الوحدات' : 'Units Cleaning'}
+              <li>
+                <Link to="/service-options/14" className="block text-slate-500 dark:text-slate-400 hover:text-primary dark:hover:text-accent transition-colors duration-300">
+                  {isAr ? 'تنظيف وغسيل الوحدات' : 'Units Cleaning'}
+                </Link>
               </li>
             </ul>
           </div>
