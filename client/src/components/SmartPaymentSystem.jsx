@@ -315,18 +315,18 @@ export default function SmartPaymentSystem({ isAr, optionTitle, basePrice = 0, r
                           </div>
                         )}
                         {instPrice > 0 ? (
-                          <div className="bg-slate-50 dark:bg-slate-800/50 rounded-xl p-3 w-full border border-slate-100 dark:border-slate-700 mt-2">
-                            <div className="flex justify-between items-center mb-1 text-sm">
-                              <span className="text-slate-500 font-medium">{isAr ? 'سعر الجهاز' : 'Device Price'}</span>
-                              <span className="font-bold text-slate-700 dark:text-slate-300">{new Intl.NumberFormat('en-EG', { style: 'currency', currency: 'EGP' }).format(devPrice)}</span>
+                          <div className="bg-slate-50 dark:bg-slate-800/50 rounded-xl p-3 sm:p-4 w-full border border-slate-100 dark:border-slate-700 mt-2 space-y-1.5">
+                            <div className="flex flex-col 2xl:flex-row 2xl:justify-between 2xl:items-center pb-2 border-b border-slate-200 dark:border-slate-700/50 gap-1">
+                              <span className="text-xs text-slate-500 font-medium">{isAr ? 'سعر الجهاز' : 'Device Price'}</span>
+                              <span className="font-bold text-slate-700 dark:text-slate-300 text-sm" dir="ltr">{new Intl.NumberFormat('en-EG', { style: 'currency', currency: 'EGP' }).format(devPrice)}</span>
                             </div>
-                            <div className="flex justify-between items-center mb-2 pb-2 border-b border-slate-200 dark:border-slate-700/50 text-sm">
-                              <span className="text-slate-500 font-medium">{isAr ? 'سعر التركيب' : 'Installation'}</span>
-                              <span className="font-bold text-slate-700 dark:text-slate-300">{new Intl.NumberFormat('en-EG', { style: 'currency', currency: 'EGP' }).format(instPrice)}</span>
+                            <div className="flex flex-col 2xl:flex-row 2xl:justify-between 2xl:items-center pb-2 border-b border-slate-200 dark:border-slate-700/50 gap-1">
+                              <span className="text-xs text-slate-500 font-medium">{isAr ? 'سعر التركيب' : 'Installation'}</span>
+                              <span className="font-bold text-slate-700 dark:text-slate-300 text-sm" dir="ltr">{new Intl.NumberFormat('en-EG', { style: 'currency', currency: 'EGP' }).format(instPrice)}</span>
                             </div>
-                            <div className="flex justify-between items-center pt-1">
+                            <div className="flex flex-col 2xl:flex-row 2xl:justify-between 2xl:items-center pt-1 gap-1">
                               <span className="text-sm font-bold text-slate-900 dark:text-white">{isAr ? 'الإجمالي' : 'Total'}</span>
-                              <span className="text-xl sm:text-2xl font-black text-primary">{new Intl.NumberFormat('en-EG', { style: 'currency', currency: 'EGP' }).format(totPrice)}</span>
+                              <span className="text-lg font-black text-primary" dir="ltr">{new Intl.NumberFormat('en-EG', { style: 'currency', currency: 'EGP' }).format(totPrice)}</span>
                             </div>
                           </div>
                         ) : (
@@ -346,9 +346,11 @@ export default function SmartPaymentSystem({ isAr, optionTitle, basePrice = 0, r
                   <p className="text-slate-500 font-medium">{isAr ? 'جاري تحميل الأسعار والموديلات...' : 'Loading prices and models...'}</p>
                 </div>
               )}
-              <button onClick={handleDeviceNext} className="w-full bg-gradient-to-r from-primary to-accent hover:from-primary-dark hover:to-primary text-white rounded-full py-4 font-bold text-[1.05rem] flex items-center justify-center gap-2 transition-all mt-auto shadow-xl shadow-primary/25 shrink-0 hover:scale-[1.02]">
-                {isAr ? 'التالي' : 'Next'} {isAr ? <ChevronLeft size={22} /> : <ChevronRight size={22} />}
-              </button>
+              <div className="mt-auto pt-6 pb-16 sm:pb-0 shrink-0 w-full">
+                <button onClick={handleDeviceNext} className="w-full bg-gradient-to-r from-primary to-accent hover:from-primary-dark hover:to-primary text-white rounded-full py-4 font-bold text-[1.05rem] flex items-center justify-center gap-2 transition-all shadow-xl shadow-primary/25 hover:scale-[1.02]">
+                  {isAr ? 'التالي' : 'Next'} {isAr ? <ChevronLeft size={22} /> : <ChevronRight size={22} />}
+                </button>
+              </div>
             </motion.div>
           )}
 
@@ -541,13 +543,13 @@ export default function SmartPaymentSystem({ isAr, optionTitle, basePrice = 0, r
                     </div>
 
                     <div className="space-y-3">
-                      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start sm:items-center bg-white dark:bg-midnight p-4 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm gap-2">
-                        <span className="text-slate-600 dark:text-slate-400 font-medium">{isAr ? 'فودافون كاش:' : 'Vodafone Cash:'}</span>
-                        <span className="font-mono font-bold text-lg text-primary bg-primary/5 px-3 py-1 rounded-lg w-fit" dir="ltr">010xxxxxxx</span>
+                      <div className="flex flex-col items-center justify-center text-center bg-white dark:bg-midnight p-5 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm gap-3">
+                        <span className="text-slate-600 dark:text-slate-400 font-bold">{isAr ? 'فودافون كاش:' : 'Vodafone Cash:'}</span>
+                        <span className="font-mono font-black text-xl text-primary bg-primary/5 px-4 py-2.5 rounded-xl border border-primary/10 w-full break-all" dir="ltr">010xxxxxxx</span>
                       </div>
-                      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start sm:items-center bg-white dark:bg-midnight p-4 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm gap-2">
-                        <span className="text-slate-600 dark:text-slate-400 font-medium">{isAr ? 'إنستاباي (InstaPay):' : 'InstaPay:'}</span>
-                        <span className="font-mono font-bold text-lg text-primary bg-primary/5 px-3 py-1 rounded-lg w-fit" dir="ltr">almajdair@instapay</span>
+                      <div className="flex flex-col items-center justify-center text-center bg-white dark:bg-midnight p-5 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm gap-3">
+                        <span className="text-slate-600 dark:text-slate-400 font-bold">{isAr ? 'إنستاباي (InstaPay):' : 'InstaPay:'}</span>
+                        <span className="font-mono font-black text-xl text-primary bg-primary/5 px-4 py-2.5 rounded-xl border border-primary/10 w-full break-all" dir="ltr">almajdair@instapay</span>
                       </div>
                     </div>
                   </div>
