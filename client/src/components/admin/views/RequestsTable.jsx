@@ -44,16 +44,23 @@ export default function RequestsTable({ isAr, requests, loading, fetchRequests, 
     }
 
     try {
-      const { error } = await supabase
-        .from('service_requests')
-        .update({ status: newStatus })
-        .eq('id', id);
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData?.session?.access_token;
+      
+      const res = await fetch(`http://${window.location.hostname}:5000/api/requests/${id}/status`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+        },
+        body: JSON.stringify({ status: newStatus })
+      });
         
-      if (!error) {
+      if (res.ok) {
         // Fetch in background to sync other data if needed, but don't await it
         if (fetchRequests) fetchRequests();
       } else {
-        throw error;
+        throw new Error('Failed to update status');
       }
     } catch (error) {
       console.error('Update status error:', error);
@@ -67,16 +74,21 @@ export default function RequestsTable({ isAr, requests, loading, fetchRequests, 
     if (!deleteConfirmId) return;
     setIsDeleting(true);
     try {
-      const { error } = await supabase
-        .from('service_requests')
-        .delete()
-        .eq('id', deleteConfirmId);
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData?.session?.access_token;
+      
+      const res = await fetch(`http://${window.location.hostname}:5000/api/requests/${deleteConfirmId}`, {
+        method: 'DELETE',
+        headers: {
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+        }
+      });
         
-      if (!error) {
+      if (res.ok) {
         if (fetchRequests) fetchRequests();
         setDeleteConfirmId(null);
       } else {
-        throw error;
+        throw new Error('Failed to delete request');
       }
     } catch (error) {
       console.error('Delete error:', error);

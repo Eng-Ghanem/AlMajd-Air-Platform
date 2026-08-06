@@ -38,35 +38,30 @@ export const AuthProvider = ({ children }) => {
       const { data: sessionData } = await supabase.auth.getSession();
       const authUser = sessionData?.session?.user;
 
-      const { data, error } = await supabase
-        .from('users')
-        .select('*')
-        .eq('id', userId)
-        .single();
-        
       let currentProfile = null;
-        
-      if (error) {
-        if (error.code === 'PGRST116') {
-          if (authUser) {
-            const newProfile = {
-              id: userId,
-              email: authUser.email,
-              name: authUser.user_metadata?.name || authUser.email.split('@')[0],
-              phone: authUser.user_metadata?.phone || null,
-              role: 'customer' // By default, any new user is a customer
-            };
-            const { data: insertData } = await supabase
-              .from('users')
-              .upsert([newProfile])
-              .select()
-              .single();
-              
-            currentProfile = insertData || newProfile;
+
+      if (sessionData?.session?.access_token) {
+        try {
+          const res = await fetch(`http://${window.location.hostname}:5000/api/auth/me`, {
+            headers: { 'Authorization': `Bearer ${sessionData.session.access_token}` }
+          });
+          if (res.ok) {
+            currentProfile = await res.json();
           }
+        } catch (err) {
+          console.error("Failed to fetch profile from API", err);
         }
-      } else {
-        currentProfile = data;
+      }
+      
+      // Fallback if API fails but auth user exists
+      if (!currentProfile && authUser) {
+        currentProfile = {
+          id: userId,
+          email: authUser.email,
+          name: authUser.user_metadata?.name || authUser.email.split('@')[0],
+          phone: authUser.user_metadata?.phone || null,
+          role: 'customer'
+        };
       }
       
       // Override with auth metadata if exists, this makes it bulletproof
@@ -107,10 +102,14 @@ export const AuthProvider = ({ children }) => {
          role: 'customer' // Default to customer
        };
 
-       const { error: dbError } = await supabase.from('users').upsert([userProfile]);
-       
-       if (dbError) {
-         console.warn("Direct insert failed", dbError);
+       try {
+         await fetch(`http://${window.location.hostname}:5000/api/auth/sync-user`, {
+           method: 'POST',
+           headers: { 'Content-Type': 'application/json' },
+           body: JSON.stringify(userProfile)
+         });
+       } catch (err) {
+         console.warn("API sync failed", err);
        }
     }
     return { data, error };

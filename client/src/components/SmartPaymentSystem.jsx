@@ -52,9 +52,9 @@ export default function SmartPaymentSystem({ isAr, optionTitle, basePrice = 0, r
 
   useEffect(() => {
     if (requiresDeviceSelection) {
-      supabase.from('device_prices').select('*')
-        .then(({ data: dbPrices, error }) => {
-          if (error) throw error;
+      fetch(`http://${window.location.hostname}:5000/api/device-prices`)
+        .then(res => res.json())
+        .then(dbPrices => {
           setAllPrices(dbPrices || []);
           const merged = defaultDevices.map(d => {
             const match = (dbPrices || []).find(p => p.id === d.id);
@@ -196,46 +196,35 @@ export default function SmartPaymentSystem({ isAr, optionTitle, basePrice = 0, r
       const payload = { 
         name: user.name, 
         phone: phone, 
-        service_type: optionTitle, 
+        address: address, // added address explicitly
+        serviceType: optionTitle, 
         message: message, 
-        total_price: Math.round(Number(finalPrice) || 0) 
+        totalPrice: Math.round(Number(finalPrice) || 0) 
       };
       
-      const { data, error } = await supabase
-        .from('service_requests')
-        .insert([payload])
-        .select()
-        .single();
-        
-      if (error) throw error;
-      
       if (finalPaymentMethod) {
-        const paymentPayload = { 
-          request_id: data.id, 
-          amount: Math.round(Number(finalPrice) || 0), 
-          status: 'completed',
-          method: finalPaymentMethod
-        };
-        
-        let { error: paymentError } = await supabase
-          .from('payments')
-          .insert([paymentPayload]);
-          
-        if (paymentError && paymentError.message.includes('method')) {
-          delete paymentPayload.method;
-          const { error: fallbackError } = await supabase
-            .from('payments')
-            .insert([paymentPayload]);
-          paymentError = fallbackError;
-        }
-        
-        if (!paymentError) {
-          await supabase
-            .from('service_requests')
-            .update({ status: 'paid' })
-            .eq('id', data.id);
-        }
+        payload.paymentMethod = finalPaymentMethod;
       }
+      
+      // Get the current session token to send along
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData?.session?.access_token;
+      
+      const res = await fetch(`http://${window.location.hostname}:5000/api/requests`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+        },
+        body: JSON.stringify(payload)
+      });
+      
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.error || `HTTP Error ${res.status}`);
+      }
+      
+      const data = await res.json();
 
       setBookingId(data.id || Math.floor(1000 + Math.random() * 9000));
       nextStep(); 

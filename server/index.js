@@ -1,6 +1,8 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
+const helmet = require('helmet');
+const rateLimit = require('express-rate-limit');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -9,34 +11,85 @@ const PORT = process.env.PORT || 5000;
 const supabase = require('../database');
 
 // Middleware
-app.use(cors());
+app.use(helmet());
+app.use(cors({
+  origin: process.env.FRONTEND_URL || '*', // Restrict to frontend origin in production
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
+  credentials: true
+}));
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
+
+// Rate Limiting
+const apiLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 200,
+  message: { error: 'Too many requests from this IP, please try again later.' }
+});
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 20,
+  message: { error: 'Too many auth attempts from this IP, please try again later.' }
+});
+
+app.use('/api/', apiLimiter);
+app.use('/api/auth/', authLimiter);
+
+// --- Auth Middleware ---
+const requireAuth = async (req, res, next) => {
+  const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return res.status(401).json({ error: 'Unauthorized: Missing token' });
+  }
+  const token = authHeader.split(' ')[1];
+  try {
+    const { data: { user }, error } = await supabase.auth.getUser(token);
+    if (error || !user) throw error;
+    
+    const { data: profile } = await supabase.from('users').select('*').eq('id', user.id).single();
+    req.user = profile || { id: user.id, email: user.email, role: 'customer' };
+    next();
+  } catch (error) {
+    return res.status(401).json({ error: 'Unauthorized: Invalid token' });
+  }
+};
+
+const requireAdmin = (req, res, next) => {
+  if (req.user && (req.user.role === 'admin' || req.user.role === 'technician')) {
+    next();
+  } else {
+    return res.status(403).json({ error: 'Forbidden: Admin or Technician access required' });
+  }
+};
+
+// API: Get Current User Profile (Bypasses RLS)
+app.get('/api/auth/me', requireAuth, (req, res) => {
+  res.json(req.user);
+});
+
 // API: Sync User to public.users
 app.post('/api/auth/sync-user', async (req, res) => {
   if (!supabase) return res.status(500).json({ error: 'Supabase client not initialized' });
   try {
-    const { id, email, name, phone, role } = req.body;
+    const { id, email, name, phone } = req.body;
     
     if (!id || !email) {
       return res.status(400).json({ error: 'Missing id or email' });
     }
     
-    let { error: dbError } = await supabase.from('users').upsert([
-      { id, name, email, phone, role }
-    ], { onConflict: 'id' });
+    // Always force role to 'customer' to prevent privilege escalation via API
+    const safeRole = 'customer';
     
-    // If it fails because of unique email (meaning the user was deleted from Auth but not public.users)
-    if (dbError && dbError.code === '23505' && dbError.message.includes('email')) {
-      const { error: updateError } = await supabase
-        .from('users')
-        .update({ id, name, phone, role })
-        .eq('email', email);
-      
-      if (updateError) throw updateError;
-      dbError = null;
+    // Use insert instead of upsert to prevent modifying existing admin accounts
+    let { error: dbError } = await supabase.from('users').insert([
+      { id, name, email, phone, role: safeRole }
+    ]);
+    
+    // If it already exists, just ignore it and return success
+    if (dbError && dbError.code === '23505') {
+       return res.status(200).json({ message: 'User already exists' });
     }
-
+    
     if (dbError) throw dbError;
     
     res.status(200).json({ message: 'User synced successfully' });
@@ -72,7 +125,7 @@ app.post('/api/auth/verify-otp', async (req, res) => {
 });
 
 // API: Admin Create Technician
-app.post('/api/admin/technicians', async (req, res) => {
+app.post('/api/admin/technicians', requireAuth, requireAdmin, async (req, res) => {
   if (!supabase) return res.status(500).json({ error: 'Supabase client not initialized' });
   try {
     const { name, email, phone, password } = req.body;
@@ -243,7 +296,7 @@ app.post('/api/requests', async (req, res) => {
 });
 
 // API: Get All Service Requests (Admin)
-app.post('/api/admin/requests', async (req, res) => {
+app.post('/api/admin/requests', requireAuth, requireAdmin, async (req, res) => {
   if (!supabase) return res.status(500).json({ error: 'Supabase client not initialized' });
   try {
     const { name, phone, email, address, serviceType, message, totalPrice, status, date } = req.body;
@@ -299,7 +352,7 @@ app.get('/api/requests', async (req, res) => {
 });
 
 // API: Delete Service Request (Admin)
-app.delete('/api/requests/:id', async (req, res) => {
+app.delete('/api/requests/:id', requireAuth, requireAdmin, async (req, res) => {
   if (!supabase) return res.status(500).json({ error: 'Supabase client not initialized' });
   try {
     const { id } = req.params;
@@ -318,7 +371,7 @@ app.delete('/api/requests/:id', async (req, res) => {
 });
 
 // API: Update Service Request Status (Admin)
-app.patch('/api/requests/:id/status', async (req, res) => {
+app.patch('/api/requests/:id/status', requireAuth, requireAdmin, async (req, res) => {
   if (!supabase) return res.status(500).json({ error: 'Supabase client not initialized' });
   try {
     const { id } = req.params;
@@ -376,37 +429,11 @@ app.post('/api/payments', async (req, res) => {
   }
 });
 
-// Initialize Stripe
-const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY || 'sk_test_mock');
-
-// API: Create Payment Intent for Stripe
-app.post('/api/create-payment-intent', async (req, res) => {
-  try {
-    const { amount } = req.body; // Amount in smallest currency unit (e.g. cents)
-    
-    if (!process.env.STRIPE_SECRET_KEY) {
-      return res.status(400).json({ error: 'Stripe secret key not configured' });
-    }
-
-    const paymentIntent = await stripe.paymentIntents.create({
-      amount: amount || 150000, // Default 1500 EGP
-      currency: 'egp',
-      automatic_payment_methods: {
-        enabled: true,
-      },
-    });
-
-    res.send({
-      clientSecret: paymentIntent.client_secret,
-    });
-  } catch (error) {
-    console.error('Stripe error:', error.message);
-    res.status(500).json({ error: error.message });
-  }
-});
+// Stripe is not currently implemented in frontend.
+// Removed /api/create-payment-intent to prevent arbitrary amount specification.
 
 // API: Get All Users (Admin)
-app.get('/api/users', async (req, res) => {
+app.get('/api/users', requireAuth, requireAdmin, async (req, res) => {
   if (!supabase) return res.status(500).json({ error: 'Supabase client not initialized' });
   try {
     const { data, error } = await supabase
@@ -422,7 +449,7 @@ app.get('/api/users', async (req, res) => {
 });
 
 // API: Get All Payments with Request details (Admin)
-app.get('/api/payments', async (req, res) => {
+app.get('/api/payments', requireAuth, requireAdmin, async (req, res) => {
   if (!supabase) return res.status(500).json({ error: 'Supabase client not initialized' });
   try {
     // We join with service_requests to get customer name
@@ -439,7 +466,7 @@ app.get('/api/payments', async (req, res) => {
 });
 
 // API: Get All Subscriptions (Admin)
-app.get('/api/subscriptions', async (req, res) => {
+app.get('/api/subscriptions', requireAuth, requireAdmin, async (req, res) => {
   if (!supabase) return res.status(500).json({ error: 'Supabase client not initialized' });
   try {
     const { data, error } = await supabase
@@ -470,7 +497,7 @@ app.get('/api/device-prices', async (req, res) => {
 });
 
 // API: Update Device Prices (Admin)
-app.put('/api/device-prices', async (req, res) => {
+app.put('/api/device-prices', requireAuth, requireAdmin, async (req, res) => {
   if (!supabase) return res.status(500).json({ error: 'Supabase client not initialized' });
   try {
     const { prices } = req.body; // Array of { id, price, discount_percentage }

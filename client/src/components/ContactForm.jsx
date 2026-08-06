@@ -22,9 +22,9 @@ export default function ContactForm({ lang }) {
   const [success, setSuccess] = useState(false);
 
   React.useEffect(() => {
-    supabase.from('device_prices').select('*')
-      .then(({ data, error }) => {
-        if (error) throw error;
+    fetch(`http://${window.location.hostname}:5000/api/device-prices`)
+      .then(res => res.json())
+      .then(data => {
         if (data) {
           const pricesMap = {};
           data.forEach(item => {

@@ -35,12 +35,13 @@ export default function TechnicianPage({ lang }) {
   const fetchRequests = async () => {
     try {
       setLoading(true);
-      const { data, error } = await supabase
-        .from('service_requests')
-        .select('*')
-        .order('created_at', { ascending: false });
-        
-      if (error) throw error;
+      setLoading(true);
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData?.session?.access_token;
+      
+      const res = await fetch(`http://${window.location.hostname}:5000/api/requests`);
+      if (!res.ok) throw new Error('Failed to fetch');
+      const data = await res.json();
       setRequests(data || []);
     } catch (err) {
       console.error('Failed to fetch requests:', err);
@@ -55,15 +56,22 @@ export default function TechnicianPage({ lang }) {
 
   const handleUpdateStatus = async (id, newStatus) => {
     try {
-      const { error } = await supabase
-        .from('service_requests')
-        .update({ status: newStatus })
-        .eq('id', id);
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData?.session?.access_token;
+      
+      const res = await fetch(`http://${window.location.hostname}:5000/api/requests/${id}/status`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+        },
+        body: JSON.stringify({ status: newStatus })
+      });
         
-      if (!error) {
+      if (res.ok) {
         fetchRequests();
       } else {
-        throw error;
+        throw new Error('Failed to update status');
       }
     } catch (error) {
       console.error('Update status error:', error);
@@ -94,26 +102,38 @@ export default function TechnicianPage({ lang }) {
         status: 'paid'
       };
       
-      const { data, error } = await supabase
-        .from('service_requests')
-        .insert([payload])
-        .select()
-        .single();
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData?.session?.access_token;
+      
+      const res = await fetch(`http://${window.location.hostname}:5000/api/admin/requests`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+        },
+        body: JSON.stringify({
+          name: newRequest.name,
+          phone: newRequest.phone,
+          serviceType: newRequest.serviceType,
+          message: newRequest.message || `Cash collection by technician. Date: ${newRequest.date || new Date().toISOString()}`,
+          totalPrice: Number(newRequest.totalPrice),
+          status: 'paid'
+        })
+      });
         
-      if (error) throw error;
+      if (!res.ok) throw new Error('Failed to create request');
+      const data = await res.json();
       
-      const paymentPayload = {
-        request_id: data.id,
-        amount: Number(newRequest.totalPrice),
-        status: 'completed',
-        method: 'cash'
-      };
-      
-      let { error: paymentError } = await supabase.from('payments').insert([paymentPayload]);
-      if (paymentError && paymentError.message.includes('method')) {
-          delete paymentPayload.method;
-          await supabase.from('payments').insert([paymentPayload]);
-      }
+      // Admin requests endpoint doesn't auto-record payments in the same way right now, 
+      // but wait, we need to record payment. Let's hit the payments API.
+      await fetch(`http://${window.location.hostname}:5000/api/payments`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+        },
+        body: JSON.stringify({ requestId: data.id, amount: Number(newRequest.totalPrice) })
+      });
       
       setSuccess(true);
       setTimeout(() => {

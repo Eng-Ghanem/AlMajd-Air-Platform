@@ -13,9 +13,9 @@ export default function ServiceOptionDetailsPage({ lang }) {
 
   useEffect(() => {
     if (id === '3' || parseInt(id) >= 11) {
-      supabase.from('device_prices').select('*')
-        .then(({ data, error }) => {
-          if (error) throw error;
+      fetch(`http://${window.location.hostname}:5000/api/device-prices`)
+        .then(res => res.json())
+        .then(data => {
           let serviceDbId = 'service_maintenance';
           if (id === '11') serviceDbId = 'service_installation';
           else if (id === '12' || id === '3') serviceDbId = 'service_maintenance';

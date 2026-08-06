@@ -11,7 +11,8 @@ export default function TechniciansManager({ isAr }) {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [allUsers, setAllUsers] = useState([]);
-  const [selectedUserId, setSelectedUserId] = useState('');
+  const [formData, setFormData] = useState({ name: '', email: '', phone: '', password: '' });
+  const [showPassword, setShowPassword] = useState(false);
 
   useEffect(() => {
     fetchTechnicians();
@@ -20,15 +21,26 @@ export default function TechniciansManager({ isAr }) {
   const fetchTechnicians = async () => {
     try {
       setLoading(true);
-      const { data, error } = await supabase
-        .from('users')
-        .select('*');
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData?.session?.access_token;
+
+      const res = await fetch(`http://${window.location.hostname}:5000/api/users`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        },
+        cache: 'no-store'
+      });
       
-      if (error) throw error;
+      if (!res.ok) {
+        const errText = await res.text();
+        throw new Error(`Failed to fetch users: ${res.status} - ${errText}`);
+      }
+      const data = await res.json();
       setTechnicians((data || []).filter(u => u.role === 'technician'));
       setAllUsers((data || []).filter(u => u.role !== 'technician'));
     } catch (err) {
       console.error('Error fetching technicians:', err);
+      setError(isAr ? `خطأ في جلب الفنيين: ${err.message}` : `Error fetching technicians: ${err.message}`);
     } finally {
       setLoading(false);
     }
@@ -36,8 +48,13 @@ export default function TechniciansManager({ isAr }) {
 
   const handleAddTechnician = async (e) => {
     e.preventDefault();
-    if (!selectedUserId) {
-      setError(isAr ? 'يرجى اختيار مستخدم' : 'Please select a user');
+    if (!formData.name || !formData.email || !formData.password) {
+      setError(isAr ? 'يرجى ملء جميع الحقول المطلوبة' : 'Please fill all required fields');
+      return;
+    }
+    
+    if (formData.phone && !/^[0-9]{11}$/.test(formData.phone)) {
+      setError(isAr ? 'يجب أن يتكون رقم الهاتف من 11 رقماً' : 'Phone number must be exactly 11 digits');
       return;
     }
     
@@ -46,15 +63,25 @@ export default function TechniciansManager({ isAr }) {
     setSuccess('');
 
     try {
-      const { error } = await supabase
-        .from('users')
-        .update({ role: 'technician' })
-        .eq('id', selectedUserId);
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData?.session?.access_token;
 
-      if (error) throw error;
+      const res = await fetch(`http://${window.location.hostname}:5000/api/admin/technicians`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(formData)
+      });
 
-      setSuccess(isAr ? 'تم تحويل المستخدم إلى فني بنجاح!' : 'User converted to technician successfully!');
-      setSelectedUserId('');
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.error || 'Failed to add technician');
+      }
+
+      setSuccess(isAr ? 'تم إضافة الفني بنجاح!' : 'Technician added successfully!');
+      setFormData({ name: '', email: '', phone: '', password: '' });
       fetchTechnicians(); // Refresh list
 
       setTimeout(() => {
@@ -185,21 +212,68 @@ export default function TechniciansManager({ isAr }) {
                 <form onSubmit={handleAddTechnician} className="space-y-4">
                   <div>
                     <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">
-                      {isAr ? 'اختر المستخدم للترقية' : 'Select User to Upgrade'}
+                      {isAr ? 'اسم الفني' : 'Technician Name'}
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      value={formData.name}
+                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                      className="w-full py-3 px-4 border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">
+                      {isAr ? 'البريد الإلكتروني' : 'Email Address'}
+                    </label>
+                    <input
+                      type="email"
+                      required
+                      value={formData.email}
+                      onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                      className="w-full py-3 px-4 border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
+                      dir="ltr"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">
+                      {isAr ? 'رقم الهاتف (اختياري)' : 'Phone Number (Optional)'}
+                    </label>
+                    <input
+                      type="tel"
+                      value={formData.phone}
+                      onChange={(e) => {
+                        const val = e.target.value.replace(/\D/g, '');
+                        if (val.length <= 11) {
+                          setFormData({ ...formData, phone: val });
+                        }
+                      }}
+                      pattern="[0-9]{11}"
+                      maxLength="11"
+                      className="w-full py-3 px-4 border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
+                      dir="ltr"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">
+                      {isAr ? 'كلمة المرور' : 'Password'}
                     </label>
                     <div className="relative">
-                      <select
-                        value={selectedUserId}
-                        onChange={(e) => setSelectedUserId(e.target.value)}
-                        className={`w-full py-3 border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all px-4`}
+                      <input
+                        type={showPassword ? "text" : "password"}
+                        required
+                        value={formData.password}
+                        onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                        className={`w-full py-3 ${isAr ? 'pr-4 pl-12' : 'pl-4 pr-12'} border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all`}
+                        dir="ltr"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className={`absolute top-1/2 -translate-y-1/2 ${isAr ? 'left-4' : 'right-4'} text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors`}
                       >
-                        <option value="">{isAr ? '--- اختر مستخدم ---' : '--- Select a User ---'}</option>
-                        {allUsers.map(u => (
-                          <option key={u.id} value={u.id}>
-                            {u.name} ({u.email || u.phone})
-                          </option>
-                        ))}
-                      </select>
+                        {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                      </button>
                     </div>
                   </div>
 
@@ -215,7 +289,7 @@ export default function TechniciansManager({ isAr }) {
                           {isAr ? 'جاري الإضافة...' : 'Adding...'}
                         </>
                       ) : (
-                        isAr ? 'ترقية إلى فني' : 'Upgrade to Technician'
+                        isAr ? 'إضافة فني' : 'Add Technician'
                       )}
                     </button>
                   </div>

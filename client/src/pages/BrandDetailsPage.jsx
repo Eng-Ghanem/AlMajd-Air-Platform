@@ -14,9 +14,9 @@ export default function BrandDetailsPage({ lang }) {
   const [prices, setPrices] = useState([]);
   
   useEffect(() => {
-    supabase.from('device_prices').select('*')
-      .then(({ data, error }) => {
-        if (error) throw error;
+    fetch(`http://${window.location.hostname}:5000/api/device-prices`)
+      .then(res => res.json())
+      .then(data => {
         setPrices(data || []);
       })
       .catch(err => console.error('Failed to load prices', err));

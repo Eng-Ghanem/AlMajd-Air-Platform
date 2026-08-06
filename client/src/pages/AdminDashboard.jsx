@@ -35,17 +35,22 @@ export default function AdminDashboard({ lang, setLang, theme, setTheme }) {
   const fetchAllData = async () => {
     try {
       setLoading(true);
+      setLoading(true);
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData?.session?.access_token;
+      const headers = { 'Authorization': `Bearer ${token}` };
+
       const [reqRes, usersRes, payRes, subRes] = await Promise.all([
-        supabase.from('service_requests').select('*').order('created_at', { ascending: false }),
-        supabase.from('users').select('*').order('created_at', { ascending: false }),
-        supabase.from('payments').select('*, service_requests(name, total_price)').order('created_at', { ascending: false }),
-        supabase.from('subscriptions').select('*').order('created_at', { ascending: false })
+        fetch(`http://${window.location.hostname}:5000/api/requests`, { headers }).then(r => r.json()),
+        fetch(`http://${window.location.hostname}:5000/api/users`, { headers }).then(r => r.json()),
+        fetch(`http://${window.location.hostname}:5000/api/payments`, { headers }).then(r => r.json()),
+        fetch(`http://${window.location.hostname}:5000/api/subscriptions`, { headers }).then(r => r.json())
       ]);
 
-      if (reqRes.data) setRequests(reqRes.data);
-      if (usersRes.data) setUsers(usersRes.data);
-      if (payRes.data) setPayments(payRes.data);
-      if (subRes.data) setSubscriptions(subRes.data);
+      if (Array.isArray(reqRes)) setRequests(reqRes);
+      if (Array.isArray(usersRes)) setUsers(usersRes);
+      if (Array.isArray(payRes)) setPayments(payRes);
+      if (Array.isArray(subRes)) setSubscriptions(subRes);
 
     } catch (error) {
       console.error('Error fetching admin data:', error);

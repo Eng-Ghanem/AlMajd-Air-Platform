@@ -51,8 +51,8 @@ export default function PricesManager({ isAr }) {
   const fetchPrices = async () => {
     try {
       setLoading(true);
-      const { data: dbPrices, error } = await supabase.from('device_prices').select('*');
-      if (error) throw error;
+      const res = await fetch(`http://${window.location.hostname}:5000/api/device-prices`);
+      const dbPrices = await res.json();
       
       // Merge (dbPrices || []) with defaultDevicesInfo
       const mergedData = defaultDevicesInfo.map(device => {
@@ -91,14 +91,25 @@ export default function PricesManager({ isAr }) {
         discount_percentage: Number(discount_percentage) || 0
       }));
       
-      const { error } = await supabase.from('device_prices').upsert(pricesToSave, { onConflict: 'id' });
+      // Get token for admin request
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData?.session?.access_token;
       
-      if (!error) {
-        setSaveSuccess(true);
-        setTimeout(() => setSaveSuccess(false), 3000);
-      } else {
-        throw error;
+      const res = await fetch(`http://${window.location.hostname}:5000/api/device-prices`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+        },
+        body: JSON.stringify({ prices: pricesToSave })
+      });
+      
+      if (!res.ok) {
+        throw new Error('Failed to save prices');
       }
+      
+      setSaveSuccess(true);
+      setTimeout(() => setSaveSuccess(false), 3000);
     } catch (error) {
       console.error('Error saving prices:', error);
     } finally {
