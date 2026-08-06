@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { supabase } from '../lib/supabase';
+import { supabase, supabaseUrl, supabaseKey } from '../lib/supabase';
 
 const AuthContext = createContext({});
 
@@ -13,7 +13,7 @@ export const AuthProvider = ({ children }) => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null);
       if (session?.user) {
-        fetchProfile(session.user.id);
+        fetchProfile(session);
       } else {
         setLoading(false);
       }
@@ -23,7 +23,7 @@ export const AuthProvider = ({ children }) => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null);
       if (session?.user) {
-        fetchProfile(session.user.id);
+        fetchProfile(session);
       } else {
         setProfile(null);
         setLoading(false);
@@ -33,17 +33,24 @@ export const AuthProvider = ({ children }) => {
     return () => subscription.unsubscribe();
   }, []);
 
-  const fetchProfile = async (userId) => {
+  const fetchProfile = async (session) => {
     try {
-      const { data: sessionData } = await supabase.auth.getSession();
-      const authUser = sessionData?.session?.user;
+      const authUser = session?.user;
+      const userId = authUser?.id;
+      const token = session?.access_token;
+
+      if (!userId) {
+        setLoading(false);
+        return;
+      }
 
       let currentProfile = null;
 
-      if (sessionData?.session?.access_token) {
+      if (token) {
         try {
           const res = await fetch(`http://${window.location.hostname}:5000/api/auth/me`, {
-            headers: { 'Authorization': `Bearer ${sessionData.session.access_token}` }
+            headers: { 'Authorization': `Bearer ${token}` },
+            cache: 'no-store'
           });
           if (res.ok) {
             currentProfile = await res.json();
@@ -53,7 +60,28 @@ export const AuthProvider = ({ children }) => {
         }
       }
       
-      // Fallback if API fails but auth user exists
+      // Try fetching from Supabase directly as a highly reliable fallback
+      if (!currentProfile && token) {
+        try {
+          const res = await fetch(`${supabaseUrl}/rest/v1/users?id=eq.${userId}&select=*`, {
+            headers: {
+              'apikey': supabaseKey,
+              'Authorization': `Bearer ${token}`
+            },
+            cache: 'no-store'
+          });
+          if (res.ok) {
+            const data = await res.json();
+            if (data && data.length > 0) {
+              currentProfile = data[0];
+            }
+          }
+        } catch (e) {
+          console.error("Supabase direct REST fetch failed:", e);
+        }
+      }
+      
+      // Final fallback if both API and Supabase fail
       if (!currentProfile && authUser) {
         currentProfile = {
           id: userId,
@@ -81,6 +109,9 @@ export const AuthProvider = ({ children }) => {
   };
 
   const login = async (email, password) => {
+    localStorage.removeItem('user');
+    setProfile(null);
+    setUser(null);
     return supabase.auth.signInWithPassword({ email, password });
   };
 

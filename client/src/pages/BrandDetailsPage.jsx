@@ -14,7 +14,7 @@ export default function BrandDetailsPage({ lang }) {
   const [prices, setPrices] = useState([]);
   
   useEffect(() => {
-    fetch(`http://${window.location.hostname}:5000/api/device-prices`)
+    fetch(`http://${window.location.hostname}:5000/api/device-prices`, { cache: 'no-store' })
       .then(res => res.json())
       .then(data => {
         setPrices(data || []);

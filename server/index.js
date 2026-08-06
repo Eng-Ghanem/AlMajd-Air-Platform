@@ -33,7 +33,8 @@ const authLimiter = rateLimit({
 });
 
 app.use('/api/', apiLimiter);
-app.use('/api/auth/', authLimiter);
+// We don't apply authLimiter globally to /api/auth/ because /api/auth/me is called very frequently
+// and gets rate limited, causing users to lose their roles. We apply it specifically below.
 
 // --- Auth Middleware ---
 const requireAuth = async (req, res, next) => {
@@ -68,7 +69,7 @@ app.get('/api/auth/me', requireAuth, (req, res) => {
 });
 
 // API: Sync User to public.users
-app.post('/api/auth/sync-user', async (req, res) => {
+app.post('/api/auth/sync-user', authLimiter, async (req, res) => {
   if (!supabase) return res.status(500).json({ error: 'Supabase client not initialized' });
   try {
     const { id, email, name, phone } = req.body;
@@ -100,7 +101,7 @@ app.post('/api/auth/sync-user', async (req, res) => {
 });
 
 // API: Auth Verify OTP (Signup)
-app.post('/api/auth/verify-otp', async (req, res) => {
+app.post('/api/auth/verify-otp', authLimiter, async (req, res) => {
   if (!supabase) return res.status(500).json({ error: 'Supabase client not initialized' });
   try {
     const { email, token, name } = req.body;
@@ -165,7 +166,7 @@ app.post('/api/admin/technicians', requireAuth, requireAdmin, async (req, res) =
 });
 
 // API: Auth Login
-app.post('/api/auth/login', async (req, res) => {
+app.post('/api/auth/login', authLimiter, async (req, res) => {
   if (!supabase) return res.status(500).json({ error: 'Supabase client not initialized' });
   try {
     const { email, password } = req.body;
@@ -190,7 +191,7 @@ app.post('/api/auth/login', async (req, res) => {
 });
 
 // API: Forgot Password
-app.post('/api/auth/forgot-password', async (req, res) => {
+app.post('/api/auth/forgot-password', authLimiter, async (req, res) => {
   if (!supabase) return res.status(500).json({ error: 'Supabase client not initialized' });
   try {
     const { email } = req.body;
@@ -205,7 +206,7 @@ app.post('/api/auth/forgot-password', async (req, res) => {
 });
 
 // API: Reset Password
-app.post('/api/auth/reset-password', async (req, res) => {
+app.post('/api/auth/reset-password', authLimiter, async (req, res) => {
   if (!supabase) return res.status(500).json({ error: 'Supabase client not initialized' });
   try {
     const { email, token, newPassword } = req.body;

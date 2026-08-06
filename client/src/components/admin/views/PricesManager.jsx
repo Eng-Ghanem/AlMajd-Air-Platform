@@ -51,7 +51,9 @@ export default function PricesManager({ isAr }) {
   const fetchPrices = async () => {
     try {
       setLoading(true);
-      const res = await fetch(`http://${window.location.hostname}:5000/api/device-prices`);
+      const res = await fetch(`http://${window.location.hostname}:5000/api/device-prices`, {
+        cache: 'no-store'
+      });
       const dbPrices = await res.json();
       
       // Merge (dbPrices || []) with defaultDevicesInfo

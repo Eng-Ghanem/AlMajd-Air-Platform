@@ -52,7 +52,7 @@ export default function SmartPaymentSystem({ isAr, optionTitle, basePrice = 0, r
 
   useEffect(() => {
     if (requiresDeviceSelection) {
-      fetch(`http://${window.location.hostname}:5000/api/device-prices`)
+      fetch(`http://${window.location.hostname}:5000/api/device-prices`, { cache: 'no-store' })
         .then(res => res.json())
         .then(dbPrices => {
           setAllPrices(dbPrices || []);

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { User, Mail, Phone, Lock, Loader2, ArrowRight, CheckCircle2, Eye, EyeOff } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
@@ -7,6 +7,7 @@ import { useAuth } from '../context/AuthContext';
 export default function SignUpPage({ lang }) {
   const isAr = lang === 'ar';
   const { register, verifyOtp } = useAuth();
+  const navigate = useNavigate();
   
   // Step 1 State
   const [name, setName] = useState('');
@@ -87,7 +88,7 @@ export default function SignUpPage({ lang }) {
       
       setStep(3); // Success step
       setTimeout(() => {
-        window.location.href = '/login';
+        navigate('/login');
       }, 2000);
     } catch (err) {
       console.error('OTP verify error:', err);

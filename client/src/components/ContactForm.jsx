@@ -22,7 +22,7 @@ export default function ContactForm({ lang }) {
   const [success, setSuccess] = useState(false);
 
   React.useEffect(() => {
-    fetch(`http://${window.location.hostname}:5000/api/device-prices`)
+    fetch(`http://${window.location.hostname}:5000/api/device-prices`, { cache: 'no-store' })
       .then(res => res.json())
       .then(data => {
         if (data) {

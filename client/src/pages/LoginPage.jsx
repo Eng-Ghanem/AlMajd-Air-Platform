@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Mail, Lock, Loader2, ArrowRight, Eye, EyeOff } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
@@ -7,6 +7,7 @@ import { useAuth } from '../context/AuthContext';
 export default function LoginPage({ lang }) {
   const isAr = lang === 'ar';
   const { login } = useAuth();
+  const navigate = useNavigate();
   
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -23,7 +24,8 @@ export default function LoginPage({ lang }) {
       const { data, error: loginError } = await login(email, password);
       if (loginError) throw loginError;
       
-      window.location.href = '/'; // Hard redirect to update Navbar state
+      // Use navigate instead of hard redirect to prevent interrupting Supabase session storage
+      navigate('/');
     } catch (err) {
       console.error('Login error:', err);
       let errorMessage = err.message || 'Failed to login';

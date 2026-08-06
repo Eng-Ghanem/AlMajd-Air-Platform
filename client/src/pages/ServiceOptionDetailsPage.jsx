@@ -13,7 +13,7 @@ export default function ServiceOptionDetailsPage({ lang }) {
 
   useEffect(() => {
     if (id === '3' || parseInt(id) >= 11) {
-      fetch(`http://${window.location.hostname}:5000/api/device-prices`)
+      fetch(`http://${window.location.hostname}:5000/api/device-prices`, { cache: 'no-store' })
         .then(res => res.json())
         .then(data => {
           let serviceDbId = 'service_maintenance';
