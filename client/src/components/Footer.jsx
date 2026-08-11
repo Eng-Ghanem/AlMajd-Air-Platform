@@ -102,7 +102,7 @@ export default function Footer({ lang }) {
               <li className="flex items-center gap-3">
                 <Phone className="text-primary shrink-0" size={20} />
                 <span className="text-slate-500 dark:text-slate-400" dir="ltr">
-                  01080925784
+                  01030697778
                 </span>
               </li>
               <li className="flex items-center gap-3">

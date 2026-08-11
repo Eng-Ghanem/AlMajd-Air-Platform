@@ -6,9 +6,6 @@ import { useNavigate } from 'react-router-dom';
 export default function TopNav({ isAr, lang, setLang, theme, setTheme, setMobileMenuOpen, requests = [], setCurrentView, setOpenRequestId }) {
   const [showNotifications, setShowNotifications] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
-  const [viewedRequestsCount, setViewedRequestsCount] = useState(() => {
-    return parseInt(localStorage.getItem('viewedRequestsCount') || '0', 10);
-  });
   
   const notifRef = useRef(null);
   const profileRef = useRef(null);
@@ -38,18 +35,14 @@ export default function TopNav({ isAr, lang, setLang, theme, setTheme, setMobile
     if (setLang) setLang(lang === 'en' ? 'ar' : 'en');
   };
 
-  const pendingRequests = requests.filter(r => r.status === 'pending').slice(0, 5);
-  const hasUnread = pendingRequests.length > viewedRequestsCount;
+  const pendingRequests = requests.filter(r => r.status === 'pending');
+  // Only show the red dot if there is at least one pending request
+  const hasUnread = pendingRequests.length > 0;
 
   const handleOpenNotifications = () => {
     const willShow = !showNotifications;
     setShowNotifications(willShow);
     setShowProfile(false);
-    
-    if (willShow) {
-      setViewedRequestsCount(pendingRequests.length);
-      localStorage.setItem('viewedRequestsCount', pendingRequests.length.toString());
-    }
   };
   return (
     <header className="h-20 bg-white dark:bg-midnight-lighter border-b border-slate-200 dark:border-slate-800 flex items-center justify-between px-4 sm:px-8 sticky top-0 z-20 transition-colors">

@@ -175,7 +175,7 @@ export default function Home({ lang }) {
               <div className="flex flex-col sm:flex-row items-center gap-6">
                 {/* WhatsApp Button */}
                 <a 
-                  href="https://wa.me/201080925784" 
+                  href="https://wa.me/201030697778" 
                   target="_blank" 
                   rel="noopener noreferrer"
                   className="flex items-center justify-center gap-3 w-full sm:w-auto px-8 py-4 rounded-full bg-green-500 text-white font-bold text-lg hover:bg-green-600 transition-all duration-300 shadow-[0_0_30px_-10px_rgba(34,197,94,0.6)] hover:shadow-[0_0_50px_-15px_rgba(34,197,94,0.9)]"
@@ -188,7 +188,7 @@ export default function Home({ lang }) {
                 
                 {/* Phone Call Button */}
                 <a 
-                  href="tel:+201080925784" 
+                  href="tel:+201030697778" 
                   className="flex items-center justify-center gap-3 w-full sm:w-auto px-8 py-4 rounded-full bg-gradient-to-r from-primary to-accent text-white font-bold text-lg hover:scale-105 transition-all duration-300 shadow-[0_0_30px_-10px_rgba(0,180,216,0.6)] hover:shadow-[0_0_50px_-15px_rgba(0,180,216,0.9)]"
                 >
                   <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">

@@ -46,22 +46,8 @@ export const AuthProvider = ({ children }) => {
 
       let currentProfile = null;
 
-      if (token) {
-        try {
-          const res = await fetch(`http://${window.location.hostname}:5000/api/auth/me`, {
-            headers: { 'Authorization': `Bearer ${token}` },
-            cache: 'no-store'
-          });
-          if (res.ok) {
-            currentProfile = await res.json();
-          }
-        } catch (err) {
-          console.error("Failed to fetch profile from API", err);
-        }
-      }
-      
-      // Try fetching from Supabase directly as a highly reliable fallback
-      if (!currentProfile && token) {
+      // 1. PRIMARY: Try fetching from Supabase directly as it is highly reliable
+      if (token && userId) {
         try {
           const res = await fetch(`${supabaseUrl}/rest/v1/users?id=eq.${userId}&select=*`, {
             headers: {
@@ -78,6 +64,21 @@ export const AuthProvider = ({ children }) => {
           }
         } catch (e) {
           console.error("Supabase direct REST fetch failed:", e);
+        }
+      }
+
+      // 2. FALLBACK: Try fetching from backend API if direct fetch failed
+      if (!currentProfile && token) {
+        try {
+          const res = await fetch(`http://${window.location.hostname}:5000/api/auth/me`, {
+            headers: { 'Authorization': `Bearer ${token}` },
+            cache: 'no-store'
+          });
+          if (res.ok) {
+            currentProfile = await res.json();
+          }
+        } catch (err) {
+          console.error("Failed to fetch profile from API", err);
         }
       }
       

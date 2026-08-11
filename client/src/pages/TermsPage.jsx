@@ -86,7 +86,7 @@ export default function TermsPage({ lang }) {
                 <section>
                   <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-4">3. Payment Policy & Pricing</h3>
                   <p>
-                    All prices displayed on the platform are approximate and subject to change based on the actual site condition and the final pricing determined by the specialized engineer. Online payments (InstaPay/Wallets) must be made before the visit to ensure commitment, or in cash upon service receipt if agreed upon. Prepaid amounts are non-refundable if the order is canceled by the customer less than 24 hours before the execution time.
+                    All prices displayed on the platform are approximate and subject to change based on the actual site condition and the final pricing determined by the specialized engineer. Online payments (InstaPay) must be made before the visit to ensure commitment, or in cash upon service receipt if agreed upon. Prepaid amounts are non-refundable if the order is canceled by the customer less than 24 hours before the execution time.
                   </p>
                 </section>
 

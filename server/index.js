@@ -3,6 +3,9 @@ const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
+const multer = require('multer');
+const path = require('path');
+const fs = require('fs');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -11,7 +14,9 @@ const PORT = process.env.PORT || 5000;
 const supabase = require('../database');
 
 // Middleware
-app.use(helmet());
+app.use(helmet({
+  crossOriginResourcePolicy: false,
+}));
 app.use(cors({
   origin: process.env.FRONTEND_URL || '*', // Restrict to frontend origin in production
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
@@ -19,6 +24,36 @@ app.use(cors({
 }));
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
+
+// Serve uploaded files statically
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
+// Multer config for video uploads
+const videoStorage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    const dir = path.join(__dirname, 'uploads/videos');
+    if (!fs.existsSync(dir)){
+      fs.mkdirSync(dir, { recursive: true });
+    }
+    cb(null, dir);
+  },
+  filename: (req, file, cb) => {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    cb(null, 'video-' + uniqueSuffix + path.extname(file.originalname));
+  }
+});
+
+const uploadVideo = multer({ 
+  storage: videoStorage,
+  limits: { fileSize: 100 * 1024 * 1024 }, // 100 MB max limit
+  fileFilter: (req, file, cb) => {
+    if (file.mimetype.startsWith('video/')) {
+      cb(null, true);
+    } else {
+      cb(new Error('Not a video! Please upload only videos.'), false);
+    }
+  }
+});
 
 // Rate Limiting
 const apiLimiter = rateLimit({
@@ -47,11 +82,17 @@ const requireAuth = async (req, res, next) => {
     const { data: { user }, error } = await supabase.auth.getUser(token);
     if (error || !user) throw error;
     
-    const { data: profile } = await supabase.from('users').select('*').eq('id', user.id).single();
+    const { data: profile, error: dbError } = await supabase.from('users').select('*').eq('id', user.id).single();
+    
+    if (dbError && dbError.code !== 'PGRST116') { // PGRST116 is "No rows found"
+       throw dbError; // Throw if there's an actual database error (timeout, connection issue, etc)
+    }
+
     req.user = profile || { id: user.id, email: user.email, role: 'customer' };
     next();
   } catch (error) {
-    return res.status(401).json({ error: 'Unauthorized: Invalid token' });
+    console.error("Auth Middleware Error:", error);
+    return res.status(401).json({ error: 'Unauthorized: Invalid token or server error' });
   }
 };
 
@@ -165,6 +206,55 @@ app.post('/api/admin/technicians', requireAuth, requireAdmin, async (req, res) =
   }
 });
 
+// API: Get list of videos
+app.get('/api/videos', (req, res) => {
+  const dir = path.join(__dirname, 'uploads/videos');
+  if (!fs.existsSync(dir)) {
+    return res.json([]);
+  }
+  fs.readdir(dir, (err, files) => {
+    if (err) {
+      console.error('Error reading videos directory', err);
+      return res.status(500).json({ error: 'Failed to read videos' });
+    }
+    // Sort by modified time descending (newest first)
+    const filesWithStats = files
+      .filter(f => f.match(/\.(mp4|webm|mov|mkv)$/i))
+      .map(file => {
+        const filePath = path.join(dir, file);
+        return {
+          filename: file,
+          url: `/uploads/videos/${file}`,
+          time: fs.statSync(filePath).mtime.getTime()
+        };
+      })
+      .sort((a, b) => b.time - a.time)
+      .map(({ filename, url }) => ({ filename, url }));
+      
+    res.json(filesWithStats);
+  });
+});
+
+// API: Upload a new video
+app.post('/api/admin/videos', requireAuth, requireAdmin, uploadVideo.single('video'), (req, res) => {
+  if (!req.file) {
+    return res.status(400).json({ error: 'No video uploaded' });
+  }
+  res.json({ message: 'Video uploaded successfully', filename: req.file.filename, url: `/uploads/videos/${req.file.filename}` });
+});
+
+// API: Delete a video
+app.delete('/api/admin/videos/:filename', requireAuth, requireAdmin, (req, res) => {
+  const filename = req.params.filename;
+  const filePath = path.join(__dirname, 'uploads/videos', filename);
+  if (fs.existsSync(filePath)) {
+    fs.unlinkSync(filePath);
+    res.json({ message: 'Video deleted successfully' });
+  } else {
+    res.status(404).json({ error: 'Video not found' });
+  }
+});
+
 // API: Auth Login
 app.post('/api/auth/login', authLimiter, async (req, res) => {
   if (!supabase) return res.status(500).json({ error: 'Supabase client not initialized' });
@@ -263,7 +353,7 @@ app.post('/api/requests', async (req, res) => {
       const paymentPayload = { 
         request_id: data.id, 
         amount: Math.round(Number(totalPrice) || 0), 
-        status: 'completed'
+        status: 'pending' // Changed to pending to require admin verification
       };
       
       let { error: paymentError } = await supabase
@@ -280,13 +370,9 @@ app.post('/api/requests', async (req, res) => {
         
       if (paymentError) {
         console.error('Failed to record payment automatically:', paymentError.message);
-      } else {
-        // Also update request status to paid
-        await supabase
-          .from('service_requests')
-          .update({ status: 'paid' })
-          .eq('id', data.id);
       }
+      // Security fix: We NO LONGER automatically mark the service_request as 'paid' here. 
+      // It remains 'pending' until the admin reviews the screenshot or collects the cash.
     }
     
     res.status(201).json({ id: data.id, message: 'Request created successfully' });

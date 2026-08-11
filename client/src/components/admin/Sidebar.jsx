@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { LayoutDashboard, FileText, CreditCard, Users, Settings, LogOut, Package, Tag } from 'lucide-react';
+import { LayoutDashboard, FileText, CreditCard, Users, Settings, LogOut, Package, Tag, Globe, Video } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 
@@ -12,6 +12,7 @@ export default function Sidebar({ isAr, currentView, setCurrentView, isMobile })
     { id: 'overview', icon: LayoutDashboard, labelAr: 'نظرة عامة', labelEn: 'Overview' },
     { id: 'requests', icon: FileText, labelAr: 'الطلبات والحجوزات', labelEn: 'Requests & Bookings' },
     { id: 'prices', icon: Tag, labelAr: 'الأسعار والخصومات', labelEn: 'Prices & Discounts' },
+    { id: 'videos', icon: Video, labelAr: 'إدارة الفيديوهات', labelEn: 'Video Management' },
     { id: 'payments', icon: CreditCard, labelAr: 'الدفعات والمعاملات', labelEn: 'Payments' },
     { id: 'subscriptions', icon: Package, labelAr: 'الاشتراكات', labelEn: 'Subscriptions' },
     { id: 'customers', icon: Users, labelAr: 'العملاء', labelEn: 'Customers' },
@@ -54,6 +55,13 @@ export default function Sidebar({ isAr, currentView, setCurrentView, isMobile })
       </nav>
 
       <div className="p-4 border-t border-slate-100 dark:border-slate-800 space-y-2">
+        <Link 
+          to="/" 
+          className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-blue-600 hover:bg-blue-50 dark:text-blue-400 dark:hover:bg-blue-500/10 transition-colors font-semibold"
+        >
+          <Globe size={20} />
+          <span>{isAr ? 'العودة للمنصة' : 'Back to Platform'}</span>
+        </Link>
         <button 
           onClick={() => setCurrentView('settings')}
           className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-colors ${

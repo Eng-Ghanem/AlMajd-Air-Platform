@@ -44,8 +44,8 @@ export default function ServiceOptionDetailsPage({ lang }) {
       descriptionEn: 'We provide the right AC unit for your space, then send a team of specialized engineers and technicians to install, operate, and ensure its efficiency.',
       stepsAr: ['معاينة المكان', 'اختيار الجهاز المناسب', 'التوريد السريع', 'التركيب والتشغيل', 'المتابعة بعد البيع'],
       stepsEn: ['Site inspection', 'Choosing the right unit', 'Fast supply', 'Installation and operation', 'After-sales follow-up'],
-      paymentMethodsAr: ['دفع كاش عند التركيب', 'دفع إلكتروني مقدم (محافظ كاش/إنستاباي)'],
-      paymentMethodsEn: ['Cash on Installation', 'Online Prepaid (Wallets/InstaPay)'],
+      paymentMethodsAr: ['دفع كاش عند التركيب', 'دفع إلكتروني مقدم (إنستاباي)'],
+      paymentMethodsEn: ['Cash on Installation', 'Online Prepaid (InstaPay)'],
     },
     '2': {
       title: isAr ? 'توريد لحد البيت بس' : 'Supply to Home Only',

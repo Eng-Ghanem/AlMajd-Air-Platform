@@ -107,8 +107,8 @@ export default function SmartPaymentSystem({ isAr, optionTitle, basePrice = 0, r
           const canvas = document.createElement('canvas');
           let width = img.width;
           let height = img.height;
-          const MAX_WIDTH = 400;
-          const MAX_HEIGHT = 400;
+          const MAX_WIDTH = 1200;
+          const MAX_HEIGHT = 1200;
           if (width > height) {
             if (width > MAX_WIDTH) { height = Math.round((height *= MAX_WIDTH / width)); width = MAX_WIDTH; }
           } else {
@@ -118,7 +118,7 @@ export default function SmartPaymentSystem({ isAr, optionTitle, basePrice = 0, r
           canvas.height = height;
           const ctx = canvas.getContext('2d');
           ctx.drawImage(img, 0, 0, width, height);
-          const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.5);
+          const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.85);
           setPaymentScreenshot(compressedDataUrl);
         };
         img.src = event.target.result;
@@ -460,7 +460,7 @@ export default function SmartPaymentSystem({ isAr, optionTitle, basePrice = 0, r
                     <div className="flex items-center gap-3">
                       <CreditCard className={paymentMethod === 'card' ? 'text-primary' : 'text-slate-400'} size={24} />
                       <span className="font-bold text-slate-900 dark:text-white">
-                        {isAr ? 'دفع إلكتروني (فودافون كاش، جميع محافظ الكاش، وإنستاباي)' : 'Online Payment (All Cash Wallets, InstaPay)'}
+                        {isAr ? 'دفع إلكتروني (إنستاباي)' : 'Online Payment (InstaPay)'}
                       </span>
                     </div>
                     <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${paymentMethod === 'card' ? 'border-primary' : 'border-slate-300'}`}>
@@ -518,27 +518,12 @@ export default function SmartPaymentSystem({ isAr, optionTitle, basePrice = 0, r
                   </div>
                   
                   <div className="bg-slate-50 dark:bg-midnight-lighter p-4 sm:p-6 rounded-2xl border border-slate-200 dark:border-slate-700 mb-6 space-y-4 shadow-sm">
-                    <p className="font-bold text-slate-900 dark:text-white mb-2">{isAr ? 'يرجى تحويل المبلغ إلى أحد الحسابات التالية:' : 'Please transfer the amount to one of the following accounts:'}</p>
-                    
-                    <div className="mb-5">
-                      <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">{isAr ? 'اختر وسيلة الدفع التي ستقوم بالتحويل منها:' : 'Select the payment method you will transfer from:'}</label>
-                      <select value={exactMethod} onChange={(e) => setExactMethod(e.target.value)} className="w-full bg-white dark:bg-midnight border border-slate-200 dark:border-slate-700 rounded-xl py-3.5 px-4 text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-primary shadow-sm font-medium">
-                        <option value="instapay">إنستاباي - InstaPay</option>
-                        <option value="vodafone_cash">فودافون كاش - Vodafone Cash</option>
-                        <option value="we_cash">وي كاش - WE Cash</option>
-                        <option value="etisalat_cash">اتصالات كاش - Etisalat Cash</option>
-                        <option value="orange_cash">أورانج كاش - Orange Cash</option>
-                      </select>
-                    </div>
+                    <p className="font-bold text-slate-900 dark:text-white mb-2 text-center">{isAr ? 'يمكنك الدفع من خلال انستاباي' : 'You can pay via InstaPay'}</p>
 
                     <div className="space-y-3">
                       <div className="flex flex-col items-center justify-center text-center bg-white dark:bg-midnight p-4 sm:p-5 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm gap-2 sm:gap-3">
-                        <span className="text-slate-600 dark:text-slate-400 font-bold">{isAr ? 'فودافون كاش:' : 'Vodafone Cash:'}</span>
-                        <span className="font-mono font-black text-lg sm:text-xl text-primary bg-primary/5 px-2 sm:px-4 py-2.5 rounded-xl border border-primary/10 w-full whitespace-nowrap tracking-wider" dir="ltr">01080925784</span>
-                      </div>
-                      <div className="flex flex-col items-center justify-center text-center bg-white dark:bg-midnight p-4 sm:p-5 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm gap-2 sm:gap-3">
                         <span className="text-slate-600 dark:text-slate-400 font-bold">{isAr ? 'إنستاباي (InstaPay):' : 'InstaPay:'}</span>
-                        <span className="font-mono font-black text-lg sm:text-xl text-primary bg-primary/5 px-2 sm:px-4 py-2.5 rounded-xl border border-primary/10 w-full whitespace-nowrap tracking-wider" dir="ltr">01080925784</span>
+                        <span className="font-mono font-black text-lg sm:text-xl text-primary bg-primary/5 px-2 sm:px-4 py-2.5 rounded-xl border border-primary/10 w-full whitespace-nowrap tracking-wider" dir="ltr">01030697778</span>
                       </div>
                     </div>
                   </div>

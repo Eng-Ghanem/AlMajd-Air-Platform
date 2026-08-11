@@ -1,9 +1,88 @@
-import React from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
-import { Play, Star, Quote } from 'lucide-react';
+import { Play, Star, Quote, Trash2, Upload, Loader2 } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
+import { supabase } from '../lib/supabase';
 
 export default function Testimonials({ lang }) {
   const isAr = lang === 'ar';
+  const [dynamicVideos, setDynamicVideos] = useState([]);
+
+  const { user } = useAuth();
+  const isAdmin = user?.role === 'admin';
+  const fileInputRef = useRef(null);
+  const [uploading, setUploading] = useState(false);
+
+  const fetchVideos = async () => {
+    try {
+      const res = await fetch(`http://${window.location.hostname}:5000/api/videos`);
+      if (res.ok) {
+        const data = await res.json();
+        setDynamicVideos(data);
+      }
+    } catch (err) {
+      console.error('Failed to fetch videos:', err);
+    }
+  };
+
+  useEffect(() => {
+    fetchVideos();
+  }, []);
+
+  const handleUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploading(true);
+    const formData = new FormData();
+    formData.append('video', file);
+
+    try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData?.session?.access_token;
+      
+      const res = await fetch(`http://${window.location.hostname}:5000/api/admin/videos`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}` },
+        body: formData
+      });
+
+      if (res.ok) {
+        fetchVideos();
+      } else {
+        alert('Failed to upload video');
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Error uploading video');
+    } finally {
+      setUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  };
+
+  const handleDelete = async (filename) => {
+    if (!window.confirm(isAr ? 'هل أنت متأكد من حذف هذا الفيديو؟' : 'Are you sure you want to delete this video?')) return;
+    
+    try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData?.session?.access_token;
+      
+      const res = await fetch(`http://${window.location.hostname}:5000/api/admin/videos/${filename}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+
+      if (res.ok) {
+        fetchVideos();
+      } else {
+        alert('Failed to delete video');
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Error deleting video');
+    }
+  };
 
   const testimonials = [
     {
@@ -80,20 +159,41 @@ export default function Testimonials({ lang }) {
           </motion.p>
         </div>
 
+        {/* Admin Controls */}
+        {isAdmin && (
+          <div className="flex justify-center mb-8">
+            <input 
+              type="file" 
+              accept="video/*" 
+              className="hidden" 
+              ref={fileInputRef} 
+              onChange={handleUpload}
+            />
+            <button 
+              onClick={() => fileInputRef.current?.click()}
+              disabled={uploading}
+              className="flex items-center gap-2 px-6 py-3 bg-primary text-white rounded-xl font-bold hover:bg-primary-dark transition-colors shadow-lg disabled:opacity-50"
+            >
+              {uploading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Upload className="w-5 h-5" />}
+              {uploading ? (isAr ? 'جاري الرفع...' : 'Uploading...') : (isAr ? 'رفع فيديو جديد' : 'Upload New Video')}
+            </button>
+          </div>
+        )}
+
         {/* Video Showcase Section */}
-        <div className="mb-24">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {[1, 2, 3].map((num) => (
+        <div className="mb-24 relative">
+          <div className="flex overflow-x-auto snap-x snap-mandatory gap-6 pb-8 px-4 md:px-0 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none']">
+            {dynamicVideos.map((video, index) => (
               <motion.div 
-                key={num}
+                key={index}
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true, amount: 0.3 }}
-                transition={{ duration: 0.5, delay: num * 0.1 }}
-                className="group relative aspect-[9/16] md:aspect-auto md:h-[500px] rounded-[2rem] bg-black overflow-hidden shadow-[0_10px_30px_rgba(0,180,216,0.15)] border border-slate-800 dark:border-slate-700/50 hover:shadow-[0_15px_40px_rgba(0,180,216,0.25)] transition-all duration-500"
+                transition={{ duration: 0.5, delay: index * 0.1 }}
+                className="group relative shrink-0 snap-center w-[85vw] sm:w-[300px] md:w-[320px] aspect-[9/16] md:aspect-auto md:h-[500px] rounded-[2rem] bg-black overflow-hidden shadow-[0_10px_30px_rgba(0,180,216,0.15)] border border-slate-800 dark:border-slate-700/50 hover:shadow-[0_15px_40px_rgba(0,180,216,0.25)] transition-all duration-500"
               >
                 <video 
-                  src={`/videos/video${num}.mp4#t=0.001`} 
+                  src={`http://${window.location.hostname}:5000${video.url}#t=0.001`} 
                   className="w-full h-full object-contain"
                   controls
                   controlsList="nodownload"
@@ -101,6 +201,17 @@ export default function Testimonials({ lang }) {
                   preload="metadata"
                   onContextMenu={(e) => e.preventDefault()}
                 />
+                
+                {/* Admin Delete Overlay */}
+                {isAdmin && (
+                  <button
+                    onClick={() => handleDelete(video.filename)}
+                    className="absolute top-4 right-4 p-3 bg-red-500/80 hover:bg-red-600 text-white rounded-full backdrop-blur-sm transition-all z-20 shadow-lg"
+                    title={isAr ? 'حذف الفيديو' : 'Delete Video'}
+                  >
+                    <Trash2 className="w-5 h-5" />
+                  </button>
+                )}
               </motion.div>
             ))}
           </div>

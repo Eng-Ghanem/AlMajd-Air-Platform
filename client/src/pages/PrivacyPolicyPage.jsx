@@ -72,7 +72,7 @@ export default function PrivacyPolicyPage({ lang }) {
                 <section>
                   <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-4">2. Use of Information</h3>
                   <p>
-                    Your data is used to provide our services in the best possible way, accurately schedule engineering visits, and securely process your payments (such as online payments via InstaPay or e-wallets). We also use the data to improve platform performance and user experience.
+                    Your data is used to provide our services in the best possible way, accurately schedule engineering visits, and securely process your payments (such as online payments via InstaPay). We also use the data to improve platform performance and user experience.
                   </p>
                 </section>
 

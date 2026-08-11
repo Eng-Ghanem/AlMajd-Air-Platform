@@ -15,6 +15,7 @@ import SubscriptionsTable from '../components/admin/views/SubscriptionsTable';
 import PricesManager from '../components/admin/views/PricesManager';
 import SettingsManager from '../components/admin/views/SettingsManager';
 import TechniciansManager from '../components/admin/views/TechniciansManager';
+import VideoManager from '../components/admin/views/VideoManager';
 
 export default function AdminDashboard({ lang, setLang, theme, setTheme }) {
   const isAr = lang === 'ar';
@@ -65,6 +66,8 @@ export default function AdminDashboard({ lang, setLang, theme, setTheme }) {
         return <Overview isAr={isAr} requests={requests} users={users} payments={payments} subscriptions={subscriptions} />;
       case 'prices':
         return <PricesManager isAr={isAr} />;
+      case 'videos':
+        return <VideoManager isAr={isAr} />;
       case 'requests':
         return <RequestsTable isAr={isAr} requests={requests} loading={loading} fetchRequests={fetchAllData} openRequestId={openRequestId} setOpenRequestId={setOpenRequestId} />;
       case 'payments':
