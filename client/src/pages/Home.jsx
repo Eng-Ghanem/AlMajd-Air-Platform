@@ -199,7 +199,7 @@ export default function Home({ lang }) {
               </div>
               
               <p className="mt-10 text-slate-600 dark:text-slate-400 font-bold text-2xl tracking-wider" dir="ltr">
-                +20 100 269 1611
+                01030697778
               </p>
             </motion.div>
 

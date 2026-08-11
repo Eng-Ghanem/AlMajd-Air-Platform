@@ -24,8 +24,15 @@ export default function LoginPage({ lang }) {
       const { data, error: loginError } = await login(email, password);
       if (loginError) throw loginError;
       
-      // Use navigate instead of hard redirect to prevent interrupting Supabase session storage
-      navigate('/');
+      // Navigate based on user role
+      const role = data?.user?.user_metadata?.role || 'customer';
+      if (role === 'admin') {
+        navigate('/admin');
+      } else if (role === 'technician') {
+        navigate('/technician');
+      } else {
+        navigate('/');
+      }
     } catch (err) {
       console.error('Login error:', err);
       let errorMessage = err.message || 'Failed to login';
