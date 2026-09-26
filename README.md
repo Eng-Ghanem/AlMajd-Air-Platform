@@ -4,6 +4,18 @@ A modern, full-stack HVAC and air systems service management platform built with
 
 ---
 
+## Table of Contents
+
+- [Features](#features)
+- [Tech Stack](#tech-stack)
+- [Architecture](#architecture)
+- [Project Structure](#project-structure)
+- [Installation & Setup](#installation--setup)
+- [License](#license)
+- [Author](#author)
+
+---
+
 ## Features
 
 ### Customer Portal
